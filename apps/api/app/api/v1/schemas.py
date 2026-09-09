@@ -154,3 +154,11 @@ class CorrectiveActionUpdateIn(ApiModel):
 
 class CorrectiveActionResolveIn(ApiModel):
     actor_id: str = Field(min_length=1, max_length=64)
+
+
+
+class EvidenceUploadOut(EvidenceOut):
+    hazard_id: str
+    hash_verified: bool
+    hazard_sync_state: str
+    hazard_geofence_state: str
