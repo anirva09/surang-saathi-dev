@@ -162,3 +162,57 @@ class EvidenceUploadOut(EvidenceOut):
     hash_verified: bool
     hazard_sync_state: str
     hazard_geofence_state: str
+
+
+class AuditEventOut(ApiModel):
+    sequence: int
+    id: str
+    entity_type: str
+    entity_id: str
+    event_type: str
+    actor_id: str | None
+    payload: dict
+    previous_hash: str | None
+    event_hash: str
+    created_at: datetime
+
+
+class AuditEventListResponse(ApiModel):
+    items: list[AuditEventOut]
+    total: int
+    limit: int
+    offset: int
+
+
+class AuditVerificationOut(ApiModel):
+    valid: bool
+    total_events: int
+    checked_events: int
+    head_hash: str | None
+    first_invalid_sequence: int | None
+    first_invalid_event_id: str | None
+    reason: str | None
+
+
+class RiskFactorDetailOut(ApiModel):
+    name: str
+    weight: float
+    current_value: int | float | str
+    score: float | None
+    contribution: float | None
+    source: str
+
+
+class RiskSnapshotOut(ApiModel):
+    risk_snapshot_id: str
+    mine_id: str
+    score: float
+    level: str
+    factors: list[RiskFactorDetailOut]
+    calculated_at: datetime
+
+
+class RiskRecalculateIn(ApiModel):
+    actor_id: str = Field(min_length=1, max_length=64)
+    gas_breaches_30d: int | None = Field(default=None, ge=0)
+    inspection_coverage_percent: float | None = Field(default=None, ge=0, le=100)

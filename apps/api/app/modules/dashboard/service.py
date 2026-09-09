@@ -60,7 +60,7 @@ def get_dashboard_summary(session: Session, mine_id: str) -> dict | None:
     risk = session.scalar(
         select(RiskSnapshot)
         .where(RiskSnapshot.mine_id == mine_id)
-        .order_by(RiskSnapshot.id.desc())
+        .order_by(RiskSnapshot.calculated_at.desc(), RiskSnapshot.id.desc())
         .limit(1)
     )
 
