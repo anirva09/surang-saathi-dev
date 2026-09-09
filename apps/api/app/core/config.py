@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
 
     database_url: str = (
-        "postgresql+psycopg://surang_saathi:change-me-local-only@localhost:5432/surang_saathi"
+        "postgresql+psycopg://surang_saathi:change-me-local-only@localhost:55432/surang_saathi"
     )
 
     minio_endpoint: str = "localhost:9000"
