@@ -1,6 +1,9 @@
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.domain.enums import HazardSeverity
 
 
 def to_camel(value: str) -> str:
@@ -98,9 +101,56 @@ class CorrectiveActionOut(ApiModel):
     status: str
     due_at: datetime
     assigned_to: ActorOut | None
+    acknowledged_at: datetime | None = None
+    resolved_at: datetime | None = None
 
 
 class HazardDetailOut(HazardListItemOut):
     description: str
     evidence: list[EvidenceOut]
     corrective_actions: list[CorrectiveActionOut]
+
+
+class HazardCreateIn(ApiModel):
+    hazard_id: str = Field(min_length=3, max_length=64)
+    mine_id: str = Field(min_length=1, max_length=64)
+    title: str = Field(min_length=3, max_length=255)
+    description: str = Field(min_length=3)
+    severity: HazardSeverity
+    location_name: str = Field(min_length=1, max_length=255)
+    reported_by_user_id: str = Field(min_length=1, max_length=64)
+    assigned_to_user_id: str | None = Field(default=None, max_length=64)
+    captured_at: datetime
+    actor_id: str = Field(min_length=1, max_length=64)
+
+
+class HazardAcknowledgeIn(ApiModel):
+    actor_id: str = Field(min_length=1, max_length=64)
+
+
+class HazardReviewIn(ApiModel):
+    actor_id: str = Field(min_length=1, max_length=64)
+    severity: HazardSeverity | None = None
+    status: Literal["ACKNOWLEDGED", "ESCALATED"] | None = None
+    assigned_to_user_id: str | None = Field(default=None, max_length=64)
+
+
+class CorrectiveActionCreateIn(ApiModel):
+    action_id: str = Field(min_length=3, max_length=64)
+    hazard_id: str = Field(min_length=1, max_length=64)
+    description: str = Field(min_length=3)
+    assigned_to_user_id: str = Field(min_length=1, max_length=64)
+    due_at: datetime
+    actor_id: str = Field(min_length=1, max_length=64)
+
+
+class CorrectiveActionUpdateIn(ApiModel):
+    actor_id: str = Field(min_length=1, max_length=64)
+    description: str | None = Field(default=None, min_length=3)
+    assigned_to_user_id: str | None = Field(default=None, max_length=64)
+    due_at: datetime | None = None
+    status: Literal["OPEN", "ACKNOWLEDGED", "OVERDUE", "ESCALATED"] | None = None
+
+
+class CorrectiveActionResolveIn(ApiModel):
+    actor_id: str = Field(min_length=1, max_length=64)
