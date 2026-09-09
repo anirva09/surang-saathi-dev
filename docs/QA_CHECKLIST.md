@@ -1,100 +1,110 @@
-# Surang Saathi — QA and Review Gates
+# Surang Saathi — QA and Release Gates
 
 ## P0 product invariants
 
-A release fails if any are violated:
+A build fails review if any are violated:
 
-- product name is Surang Saathi only
+- active product name is Surang Saathi
 - offline-first field behavior is preserved
 - submitted compliance evidence is append-only
 - no silent last-write-wins
-- risk scores remain explainable
-- rule-based MRI precedes unsupported production ML claims
-- low-confidence OCR requires human review
-- hash-chained PostgreSQL remains the MVP audit mechanism
-- no full 3D digital twin enters MVP scope
-- synthetic/demo data is not presented as live Coal India data
+- local/server geofence evidence remain distinct
+- risk scores are explainable
+- worker-selected severity is not silently replaced by AI suggestion
+- rule-based MRI precedes unsupported ML claims
+- low-confidence OCR requires human review when OCR exists
+- hash-chained PostgreSQL remains the MVP tamper-evidence mechanism
+- no full 3D twin enters MVP scope
+- demo/synthetic data is labeled honestly
 
-## Repository / governance
+## Repository / documentation
 
-- current work is on the branch required by the packet
-- public `surang-saathi` repo is untouched unless public approval exists
-- no secrets or credentials are staged
-- no obsolete product naming or retired implementation protocol appears in active tracked files
-- `python scripts/verify-governance.py` passes
+- work occurs on the intended private feature branch
+- no unreviewed push to public repo
+- no secrets staged
+- active docs follow authority order
+- archive/future docs do not override current implementation
 - `git diff --check` passes
-- commit authorship is real and preserved
+- authorship is preserved
 
-## Web UI
+## Web
 
-For affected work:
+For affected changes:
 
+- install from canonical npm lockfile succeeds
+- unit/behavior tests pass
 - typecheck passes
 - lint passes
-- production build passes
-- focused component/behavior tests pass
-- accessibility audit passes
-- no horizontal overflow at 360 px
-- verify 360 px / 768 px / 1440 px
-- worker-facing touch targets meet 40–48 px rules
-- operational state uses wording/icon plus color, not color alone
-- keyboard focus is visible
-- labels/errors/descriptions are programmatically associated
-- Hindi/Devanagari text is not clipped
+- production build exits 0
+- accessibility checks execute successfully in at least one authoritative environment
+- verify 360/768/1440
+- no horizontal overflow at 360
+- visible keyboard focus
+- labels/errors/descriptions associated
+- field touch targets meet defined sizes
+- Hindi/Devanagari text not clipped
 
 ## Mobile / offline
 
-- queue survives process restart
-- queued events retain client UUID and timestamps
-- media is not lost during prolonged offline state
-- cached reference data and geofence geometry work offline
-- user can see queued/syncing/synced/conflict/offline state
-- network recovery triggers safe retry
-- retry does not create duplicate logical events
-- destructive/ledger-relevant submission requires consequence-aware confirmation
+- event queue survives process restart
+- media manifest survives restart
+- locally generated IDs/timestamps retained
+- cached mine/section data available offline
+- local geofence works offline
+- queued/syncing/synced/conflict/offline visible
+- retry after reconnect is safe
 
 ## Sync
 
-- same event retry is idempotent
-- duplicate event delivery is not duplicated in state
+- same immutable event retry is idempotent
+- duplicate transport does not duplicate logical event
 - real conflict preserves both claims
-- manager reconciliation state is explicit
-- server geofence result is distinct from client/local result
-- media hash mismatch is surfaced and never normalized away
+- local vs server geofence evidence distinct
+- media hash mismatch visible
 
-## Compliance / corrective actions
+## Corrective action / compliance
 
-- only authorized role/scope can assign/approve/escalate
-- state transitions reject illegal jumps
-- SLA deadline and owner are visible
-- overdue/escalated state is deterministic
-- closure requires evidence/approval path defined by the workflow
-- historical events remain queryable after correction
+- unauthorized roles/scopes cannot act
+- illegal state transitions rejected
+- owner and deadline visible
+- overdue/escalated state deterministic when automation exists
+- closure requires configured proof/approval
+- historical events remain queryable after corrections
 
-## Audit ledger
+## Audit
 
-- canonical serialization is deterministic
-- previous hash linkage is correct
-- changing an earlier test record fails verification
-- ledger write failures do not falsely report successful permanent completion
-- verification report identifies the failed link/record
+- canonical serialization deterministic
+- chain linkage correct
+- tampering fixture causes verification failure
+- ledger failure never reports permanent completion as successful
+- verifier identifies broken link
 
 ## Risk
 
-- score always includes contributing factors
-- factor names, weights, current values are visible
-- scoring rule/model version is recorded
-- deterministic test fixtures reproduce expected score
-- UI does not imply statistical certainty beyond the rule system
+- score always includes factors
+- factor name/weight/value shown
+- scoring version recorded
+- deterministic fixture reproduces expected score
+- UI does not imply confidence beyond the model/rules
 
-## Public-release gate
+## Golden Slice release gate
+
+A candidate is not approved until a demo can run:
+
+```text
+offline hazard → queue → sync → server validation → manager action → proof → closure → ledger verification
+```
+
+from a clean setup without manual database edits.
+
+## Public release gate
 
 Before **APPROVED FOR PUBLIC**:
 
-- setup works from a clean clone
-- README and architecture match the released build
-- screenshots/demo assets are current
-- no internal prompts, hidden QA notes, private fixture data, or secrets
-- dependency licenses/attributions are present
-- production claims are evidence-backed
-- 2-minute and 5-minute demos are rehearsable offline
+- clean clone setup passes
+- README/docs match released code
+- screenshots current
+- no private prompts/internal secrets
+- dependency licenses/attribution present
+- claims are evidence-backed
+- 2-minute and 5-minute demos are rehearsable

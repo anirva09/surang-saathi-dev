@@ -1,174 +1,149 @@
-# Surang Saathi — UI Principles
+# Surang Saathi — Government UX Principles
 
-## 1. Product character
+## 1. Design objective
 
-The interface should feel like a credible government engineering system used in and around coal mines: calm, practical, accountable, and field-ready.
+The interface should feel like a trusted operational instrument used by mine workers and officials, not a technology demo.
 
-Visual references:
+Inspired by:
 
 - geological survey sheets
 - engineering field notebooks
-- DGMS inspection forms
+- DGMS-style inspection forms
 - government service portals
 
 Avoid:
 
 - glassmorphism
-- neon or decorative gradients
-- futuristic AI styling
-- generic startup dashboards
-- decorative 3D
-- excessive rounded cards
-- soft shadow stacks used as primary structure
-- animation that competes with operational status
+- neon/futuristic AI styling
+- decorative gradients
+- startup KPI-card overload
+- excessive rounded corners
+- chatbot-first IA
 
-## 2. Locked core palette
+## 2. Locked colors
 
-These eight tokens never drift between screens:
+| Token | Hex |
+|---|---|
+| Background | `#F7F3EA` |
+| Surface | `#FFFDF8` |
+| Primary | `#8C4A2F` |
+| Accent | `#D4A72C` |
+| Success | `#4F5D4A` |
+| Danger | `#C6472D` |
+| Text | `#2F3A44` |
+| Border | `#D8CCBA` |
 
-| Token | Hex | Role |
-|---|---|---|
-| Background | `#F7F3EA` | application canvas; warm paper |
-| Surface | `#FFFDF8` | forms, cards, tables, panels |
-| Primary | `#8C4A2F` | primary actions, active navigation |
-| Accent | `#D4A72C` | attention, pending, warnings |
-| Success | `#4F5D4A` | resolved, synced, verified |
-| Danger | `#C6472D` | destructive actions, conflict, critical failure |
-| Text | `#2F3A44` | primary ink |
-| Border | `#D8CCBA` | form/table boundaries and hairlines |
+Derived colors may be added for accessibility/state nuance, but must not replace these semantic anchors.
 
-Derived tones are allowed only when they preserve contrast and clearly map back to a locked semantic color.
+## 3. Information hierarchy by role
 
-## 3. Surface language
+### Mine worker
 
-- Default surfaces are flat.
-- Structure comes from 1 px borders, section rules, alignment, and spacing.
-- Corners remain near-square; avoid rounded startup-card aesthetics.
-- Shadows are reserved for overlays such as dialogs, dropdowns, or popovers, not normal cards.
-- Spacing uses a 4 px base grid.
+Immediate questions:
 
-## 4. Field typography
+1. What do I need to record?
+2. Can I do it without network?
+3. Did my evidence save?
+4. What is queued/synced/conflicted?
 
-Worker/field surfaces:
+Keep worker screens simple and touch-first.
 
-- body and field values: **14 px minimum**
-- field labels: **12 px minimum**
-- help/error text: **12 px minimum**
-- critical state/decision copy must not be relegated to tiny metadata
+### Safety officer / manager
 
-Typography below 12 px is for dense desktop metadata only, never for information a mine worker needs to act on.
+Immediate questions:
 
-Hindi/Devanagari line height must be visually checked for clipping. Bengali and Odia localization architecture must not be blocked by hard-coded Latin assumptions.
+1. What is unsafe?
+2. What needs my action?
+3. Who owns it?
+4. What is overdue/escalated?
+5. What evidence supports the claim?
 
-## 5. Touch targets
+### Corporate / auditor
 
-Field/mobile:
+Immediate questions:
 
-- primary large action: **48 px minimum height**
-- normal mobile control: **40 px minimum height**
-- radio/checkbox/choice row hit area: **48 px minimum**
-- 32 px controls: desktop dense-table actions only
+1. What changed across mines?
+2. Where are recurring risks/compliance gaps?
+3. Can I verify the audit trail/dossier?
 
-Controls are designed for gloved or one-handed use and poor underground lighting.
+## 4. Field typography and targets
 
-## 6. Bilingual and low-literacy behavior
+Worker-facing minimums:
 
-- Field controls own both the primary label and translated/co-label contract.
-- Translation is not an afterthought added independently screen by screen.
-- Voice affordances appear where text entry is expected on field surfaces.
-- Icons never replace critical wording by themselves.
-- Language architecture supports Hindi, Bengali, Odia, and English from day one.
+- body/value: 14 px or larger
+- labels: 12 px or larger
+- help/error: 12 px or larger
+- large primary field action: 48 px target
+- standard mobile control: 40 px or larger
+- radio/checkbox row: 48 px hit area
 
-## 7. Button semantics
+32 px controls are dense desktop utilities only.
 
-### Primary
+## 5. Status semantics
 
-Normal progression, e.g. `New inspection`, `Assign action`.
-
-### Secondary
-
-Lower-emphasis action, e.g. `Export register`.
-
-### Ghost
-
-Low-emphasis utility, e.g. `Save draft`.
-
-### Commit
-
-Creates permanent/ledger-relevant state, e.g. `Submit inspection`, `Approve sign-off`, `Close corrective action`.
-
-### Danger
-
-Destructive action, e.g. `Discard draft`.
-
-**Commit and Danger are never interchangeable.** Permanent actions use consequence-aware confirmation copy, not merely “Are you sure?”.
-
-## 8. Status semantics
-
-Operational state never depends on color alone. Use:
+Critical state is always:
 
 ```text
 icon + explicit wording + semantic color
 ```
 
-Central vocabularies must cover at least:
+Color alone is insufficient.
 
-### Sync
+### Sync vocabulary
 
-`QUEUED`, `SYNCING`, `SYNCED`, `CONFLICT`, `OFFLINE`
+- `QUEUED`
+- `SYNCING`
+- `SYNCED`
+- `CONFLICT`
+- `OFFLINE`
 
-Offline is expected operating context, not a generic error.
+Offline is normal operating context, not generic danger.
 
 ### Geofence evidence
 
-Keep distinct:
+Keep separate:
 
-- local/device validation
-- authoritative server verification
-- server verification pending
-- outside geofence
-- conflict/reconciliation state where needed
+- `LOCAL_VALID`
+- `SERVER_PENDING`
+- `SERVER_VERIFIED`
+- `OUTSIDE_GEOFENCE`
+- `CONFLICT`
 
-Never collapse local validation and server verification into one generic “Verified” badge.
+Never collapse local and server verification into one generic “Verified.”
 
-### Violation lifecycle
+## 6. AI accountability
 
-`OPEN → ACKNOWLEDGED → OVERDUE → ESCALATED → RESOLVED`
+- AI suggestion is visually labeled as a suggestion.
+- It never silently preselects worker severity.
+- OCR confidence is visible; low confidence requires human review.
+- Risk scores always show factors.
 
-## 9. AI accountability
+## 7. Button semantics
 
-- AI severity suggestion is marked as a suggestion and never preselects the worker answer.
-- `workerSelectedSeverity` and `aiSuggestedSeverity` remain distinct values.
-- A Mine Risk Index component/API response requires contributing factors.
-- AI/OCR uncertainty is visible rather than hidden behind a confident visual treatment.
-- No opaque model output appears on compliance-facing screens.
+- **Primary:** normal progression
+- **Secondary:** lower-priority action
+- **Ghost:** utility / save draft
+- **Commit:** creates permanent or ledger-relevant state
+- **Danger:** destructive action
 
-## 10. Evidence components
+Commit and Danger are distinct. Permanent actions use consequence-aware confirmation copy.
 
-Inspection/hazard records should make accountability evidence easy to defend:
+Example:
 
-- lifecycle state
-- sync state
-- geofence evidence/source
-- inspector/reporter identity
-- timestamp
-- media/evidence count
-- ledger reference when applicable
+> **Submit this inspection?** After submission, this becomes part of the permanent compliance record. Corrections will be recorded as new entries.
 
-Worker cards may be simpler than manager cards. Do not import desktop density into underground workflows.
+## 8. Accessibility
 
-## 11. Accessibility
+Verify:
 
-For UI work, verify at minimum:
+- WCAG AA contrast
+- keyboard/focus on web
+- accessible names
+- label/error association
+- no 360 px horizontal overflow
+- touch-target rules
+- disabled-state clarity
+- Hindi/Devanagari glyph line-height/clipping
+- no critical information encoded only by color or icon
 
-- WCAG AA text/control contrast
-- visible keyboard focus on web
-- accessible names for icon-only controls
-- labels associated with inputs
-- error/help text wired with `aria-describedby` where applicable
-- no horizontal overflow at 360 px
-- worker touch targets meet the size rules above
-- disabled states are distinguishable without relying only on opacity
-- Hindi/Devanagari glyphs are not clipped
-
-Target viewports for web checks: **360 px, 768 px, 1440 px**.
+Web reference widths: 360, 768, 1440 px.

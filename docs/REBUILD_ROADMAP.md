@@ -1,161 +1,64 @@
-# Rebuild v1 Roadmap
+# Surang Saathi — Rebuild Roadmap
 
-This document is an execution sequence inside the authoritative Phase 0–5 roadmap in `PROJECT_BRIEF.md`. It does not replace those phases.
+Each stage has an explicit exit gate. Do not start a later stage because earlier screens “look done.”
 
-## Workstream R0 — Governance foundation
+## R0 — Canonical documentation and repo governance
 
-**Maps to:** Project Brief Phase 0
+**Output:** current docs, ADRs, Git strategy, QA gates, archive/future separation.
+**Exit:** no active ambiguity about product name, stack, MVP scope, or authority order.
 
-Deliverables:
+## R1 — Design system
 
-- authority order
-- rebuild architecture
-- GitHub strategy
-- UI principles
-- AI Studio protocol
-- CI governance checks
-- build-state tracker
+**Build:** locked tokens, typography, field-safe button/field/choice primitives, StatusBadge, SyncStatus, GeofenceProof, SeveritySelector, RiskIndexMeter, consequence-aware confirmation, design-system route.
+**Verify:** tests, typecheck, lint, production build, accessibility.
+**Exit:** primitives pass at 360/768/1440 and encode domain semantics correctly.
 
-**Exit:** repository has one active workflow and packet 0001 is ready.
+## R2 — Backend foundation
 
-## Workstream R1 — Design system foundation
+**Build:** FastAPI shell, config, PostgreSQL/PostGIS connection, Alembic migrations, module boundaries, health/readiness, test harness.
+**Exit:** clean-clone backend starts and tests against a disposable database.
 
-**Maps to:** Project Brief Phase 0
+## R3 — Flutter offline foundation
 
-Deliverables:
+**Build:** Android-priority app shell, Drift/SQLite schema, event queue, media queue, persistent sync indicator, cached mine/section geometry contract.
+**Exit:** queued event survives restart with network disabled.
 
-- Next.js web shell for design-system development
-- locked tokens and typography
-- field-safe controls
-- semantic status vocabulary
-- sync/geofence evidence primitives
-- severity suggestion contract
-- explainable MRI presentation contract
-- accessibility verification
+## R4 — Offline hazard capture
 
-**Not included:** manager dashboard, production APIs, offline mobile workflow.
+**Build:** structured hazard form, media capture, worker severity, local geofence, client UUID/timestamp, durable submit.
+**Exit:** a complete hazard can be submitted offline and remains queued after restart.
 
-## Workstream R2 — Backend foundation
+## R5 — Immutable sync
 
-**Maps to:** Project Brief Phase 0
+**Build:** batch upload, idempotency, server geofence check, hash validation, conflict retention.
+**Exit:** repeated sync does not duplicate logical events; conflicting evidence is preserved.
 
-Deliverables:
+## R6 — Manager action loop
 
-- FastAPI shell
-- typed configuration
-- PostgreSQL/PostGIS connection boundary
-- health/readiness endpoint
-- modular-monolith package boundaries
-- test harness
+**Build:** actionable list, evidence detail, corrective-action assignment, proof, approve/reject closure.
+**Exit:** manager can complete the action loop against synced field evidence.
 
-**Not included:** domain business logic or production integrations.
+## R7 — Audit ledger
 
-## Workstream R3 — Field offline foundation
+**Build:** canonical payload serializer, previous-hash chaining, ledger append, chain verifier.
+**Exit:** changing an earlier fixture makes verification fail at the affected link.
 
-**Maps to:** Project Brief Phase 1
+### SIH Core Milestone
 
-Deliverables:
+R0–R7 together are the first release candidate. Freeze and rehearse the 2-minute demo before adding intelligence features.
 
-- Flutter Android-priority shell
-- local SQLite/Drift event store
-- persistent sync-state shell
-- cached mine/section reference contract
-- durable media queue boundary
+## R8 — Governance automation
 
-## Workstream R4 — Offline hazard capture
+Rules-as-data, SLA timers, overdue transition, escalation ladder, notifications.
 
-**Maps to:** Project Brief Phase 1
+## R9 — Explainable MRI + GIS + dossier
 
-Deliverables:
+Rule-based MRI, contributing factors, mine map, PDF dossier.
 
-- voice/text/photo hazard capture
-- client UUID + local timestamp
-- local geofence check
-- media hash capture
-- self-reported severity with optional AI suggestion slot
-- queue survives restart/multi-day offline use
+## R10 — OCR / voice / sensor intelligence
 
-## Workstream R5 — Immutable sync
+Only after data prerequisites and Golden Slice stability.
 
-**Maps to:** Project Brief Phase 1
+## R11 — Innovation / production evolution
 
-Deliverables:
-
-- immutable batch upload
-- idempotency
-- duplicate-safe response
-- server geofence/hash validation
-- conflict retention and manager reconciliation flag
-
-## Workstream R6 — Manager action loop
-
-**Maps to:** Project Brief Phase 1
-
-Deliverables:
-
-- manager evidence review
-- corrective-action assignment
-- owner + deadline
-- proof submission
-- approve/reject closure path
-
-## Workstream R7 — Audit ledger
-
-**Maps to:** Project Brief Phase 1
-
-Deliverables:
-
-- canonical content serialization
-- previous-hash chain
-- ledger writes for specified events
-- verification endpoint/report
-
-**Phase-1 rebuild exit:** offline field event can sync, be acted on, close with evidence, and verify through the ledger.
-
-## Workstream R8 — Statutory automation + rule-based MRI
-
-**Maps to:** Project Brief Phase 2
-
-Deliverables:
-
-- rules-as-data table
-- SLA scheduler
-- escalation ladder
-- explainable rule-based MRI
-- GIS mine risk view
-- dossier generation
-
-## Workstream R9 — AI/document layer
-
-**Maps to:** Project Brief Phase 3
-
-Deliverables are phase-gated:
-
-- OCR capture/extraction/review queue
-- multilingual voice input
-- on-device hazard triage + SMS fallback
-- sensor ingestion/anomaly detection
-- ML MRI only after adequate real data exists
-
-## Workstream R10 — Innovation additions
-
-**Maps to:** Project Brief Phase 4
-
-Only after the core is stable:
-
-- contractor trust score + cross-mine flagging
-- WhatsApp fallback
-- 2D mine-section overlay
-- predictive downtime/safety correlation
-- corporate/ministry analytics expansion
-
-## Workstream R11 — Hardening and public release
-
-**Maps to:** Project Brief Phase 5
-
-- security/RBAC edge review
-- load and sync resilience tests
-- training/demo content
-- deployment/runbook
-- public-repository curation
-- SIH demo freeze
+Contractors, WhatsApp, 2D overlay, broader corporate analytics, production infrastructure.

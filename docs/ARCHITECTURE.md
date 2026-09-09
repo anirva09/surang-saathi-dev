@@ -1,126 +1,142 @@
-# Surang Saathi — Rebuild MVP Architecture
+# Surang Saathi — MVP Architecture
 
-## 1. Intent
+## 1. Architectural goal
 
-Surang Saathi is a government-grade operating platform for coal-mine governance and compliance. The rebuild optimizes for one load-bearing property: **field evidence captured without connectivity can become accountable, validated, auditable management action without being silently overwritten.**
+Make offline field evidence become validated, accountable, auditable management action with the fewest moving parts necessary for SIH.
 
-The MVP uses a modular monolith for backend delivery speed while preserving the domain boundaries in the project brief.
-
-## 2. Locked architectural invariants
-
-- **Offline-first:** field workflows must remain usable through multi-day zero-connectivity periods.
-- **Append-only:** submitted compliance evidence is never mutated in place.
-- **No silent last-write-wins:** conflicts are retained and surfaced for reconciliation.
-- **Rule-based first:** the Mine Risk Index ships with transparent weighted rules before production ML.
-- **Explainable:** every compliance-facing risk score includes contributing factors.
-- **SHA-256 audit chain:** MVP tamper evidence uses canonical content plus the previous hash in PostgreSQL.
-- **Modular monolith:** logical backend domains remain explicit inside one FastAPI deployment for the SIH MVP.
-
-## 3. System view
+## 2. System view
 
 ```text
-┌──────────────────────────────┐       ┌──────────────────────────────┐
-│ Flutter Field App            │       │ Next.js Web Portal           │
-│ Android priority             │       │ Manager / Corporate roles    │
-│ SQLite / Drift               │       │ Role-scoped UX               │
-│ offline queue + cache        │       │                              │
-└──────────────┬───────────────┘       └──────────────┬───────────────┘
-               │ REST                                  │ REST
-               └──────────────────┬───────────────────┘
-                                  ▼
-                    ┌──────────────────────────────┐
-                    │ FastAPI Modular Monolith     │
-                    │ auth                         │
-                    │ inspections                  │
-                    │ hazards                      │
-                    │ sync                         │
-                    │ compliance                   │
-                    │ corrective_actions           │
-                    │ audit                        │
-                    │ notifications                │
-                    │ risk                         │
-                    │ documents                    │
-                    └──────────┬───────────┬───────┘
-                               │           │
-                   ┌───────────▼────┐ ┌────▼─────────────┐
-                   │ PostgreSQL +   │ │ S3-compatible    │
-                   │ PostGIS        │ │ object storage   │
-                   │ state/spatial  │ │ MinIO locally    │
-                   └────────────────┘ └──────────────────┘
+Flutter Field App                    Next.js Web Portal
+Android priority                     manager / corporate / audit
+SQLite/Drift                         role-scoped views
+      │                                      │
+      └──────────────── REST ────────────────┘
+                         │
+                         ▼
+                FastAPI Modular Monolith
+         ┌─────────────────────────────────────┐
+         │ auth                                │
+         │ inspections                         │
+         │ hazards                             │
+         │ sync                                │
+         │ compliance                          │
+         │ corrective_actions                  │
+         │ audit                               │
+         │ notifications                       │
+         │ risk                                │
+         │ documents                           │
+         └──────────────┬───────────────┬──────┘
+                        │               │
+                  PostgreSQL         MinIO/S3
+                  + PostGIS          when media needed
 ```
 
-This is an intended boundary map, not a claim that every module is already implemented.
+## 3. Monorepo target
 
-## 4. Domain ownership
+```text
+surang-saathi-dev/
+├── apps/
+│   ├── web/                 # Next.js
+│   └── mobile/              # Flutter
+├── backend/
+│   ├── app/
+│   │   ├── core/
+│   │   ├── auth/
+│   │   ├── inspections/
+│   │   ├── hazards/
+│   │   ├── sync/
+│   │   ├── compliance/
+│   │   ├── corrective_actions/
+│   │   ├── audit/
+│   │   ├── notifications/
+│   │   ├── risk/
+│   │   └── documents/
+│   ├── migrations/
+│   └── tests/
+├── packages/
+│   └── contracts/           # OpenAPI/generated/shared contract artifacts where useful
+├── infra/
+│   └── docker-compose.yml
+└── docs/
+```
 
-| Module | Owns | Must not own |
-|---|---|---|
-| `auth` | identity claims, role/scope authorization | domain-specific safety/compliance rules |
-| `inspections` | inspection record contracts and evidence references | sync transport, escalation scheduler |
-| `hazards` | hazard report contracts, reported severity, evidence references | corrective-action approval |
-| `sync` | immutable batch intake, idempotency, conflict surfacing | silent conflict resolution |
-| `compliance` | violation lifecycle, SLA, statutory linkage, escalation | raw authentication/media bytes |
-| `corrective_actions` | assignment, deadline, proof, approval/rejection events | destructive rewriting of submitted history |
-| `audit` | canonical serialization, content hash, previous hash, verification | business-state ownership |
-| `notifications` | delivery requests/channel routing | source-of-truth compliance status |
-| `risk` | rule-based MRI and contributing-factor breakdown | opaque scores |
-| `documents` | scans, OCR extraction, confidence, review state | irreversible acceptance of uncertain fields |
+This is a target boundary map; do not create empty folders merely for appearance.
 
-## 5. Golden Workflow
+## 4. Request/data flow
 
-### 4.1 Offline capture
+### Field capture
 
-The field client creates a client UUID before server contact, records a local timestamp, stores structured form data in SQLite/Drift, hashes captured media, and records local geofence evaluation against cached geometry.
+1. Client generates event UUID and local timestamp.
+2. Client stores structured payload and media metadata locally.
+3. Local geofence check uses cached geometry.
+4. Submitted event is immutable in the local event history.
+5. UI shows explicit queue/offline state.
 
-A queued event is durable across app restart and prolonged offline periods.
+### Sync
 
-### 4.2 Sync
+1. Client uploads an immutable batch.
+2. Server de-duplicates by event identifier/idempotency key.
+3. Server stores event before deriving current domain state.
+4. Server re-validates geofence using PostGIS.
+5. Hash/media-integrity result is stored separately from the client claim.
+6. Conflicts are retained and surfaced.
 
-When connectivity returns, the client uploads immutable events using idempotency keys/client event IDs.
+### Manager action
 
-Expected outcomes:
+1. Web portal loads evidence and validation state.
+2. Manager creates corrective action.
+3. Responsible actor submits proof.
+4. Manager approves/rejects closure.
+5. Ledger-relevant events are appended to audit chain.
 
-- new event → appended
-- same event retried → idempotent success
-- duplicate/conflicting evidence → retained and flagged
-- never silent last-write-wins
+## 5. Data ownership
 
-### 4.3 Server validation
+Each domain module owns its business rules and service/repository layer. Cross-module writes happen through explicit application interfaces/events, not arbitrary table mutation from unrelated modules.
 
-The authoritative backend re-validates geofence position against PostGIS and confirms uploaded media hashes. Device-local validation and server validation remain separately represented.
+Examples:
 
-### 4.4 Manager ownership
+- `sync` owns ingestion/idempotency/conflict intake, not corrective-action decisions.
+- `compliance` owns violation state machine and SLA rules.
+- `audit` owns canonicalization/hash-chain append/verification.
+- `risk` reads approved inputs and produces explainable results; it does not mutate compliance decisions.
 
-The manager reviews evidence and assigns a corrective action with responsible person and deadline. The compliance lifecycle follows:
+## 6. API strategy
 
-`OPEN → ACKNOWLEDGED → OVERDUE → ESCALATED → RESOLVED`.
+- REST-first for MVP.
+- OpenAPI generated from FastAPI is the contract source.
+- Version public API paths when real compatibility pressure appears; avoid premature internal gRPC.
+- Idempotency is explicit on offline sync endpoints.
+- Permanent actions use consequence-aware endpoints/commands, not generic destructive CRUD.
 
-### 4.5 Resolution and audit
+## 7. Authentication / authorization
 
-Proof submission and manager approval create new events. Ledger-relevant events are written using canonical content plus the previous ledger hash. Historical submitted events are not mutated in place.
+Target model: OAuth2/OIDC identity, JWT claims, role + scope authorization.
 
-### 4.6 Risk and roll-up
+For SIH, implement enough identity/RBAC to demonstrate correct role boundaries without building a full IAM platform if it blocks the Golden Slice.
 
-Once the Phase-1 loop is stable, the rule-based MRI recomputes from operational inputs and returns score plus contributing factors. Higher-level views aggregate without giving corporate users destructive raw-record edit rights.
+## 8. Why not microservices now
 
-## 6. Core data contracts
+Separate deployment adds service discovery, distributed failures, cross-service auth, network observability, multiple pipelines, versioning, and deployment coordination. None of those prove the mine-worker value loop.
 
-Stable identifiers should be UUIDs for offline-created entities/events. Exact schemas are introduced by their implementation packets; do not create speculative database models during foundation work.
+We retain logical boundaries so extraction later is possible.
 
-The project brief's core entities remain authoritative: User, Mine, MineSection, Inspection, HazardReport, CorrectiveAction, Violation, Contractor, MineRiskScore, AuditLedgerEntry, Document, SensorReading.
+## 9. Evolution path
 
-## 7. Auth model
+### SIH
 
-OAuth2/OIDC-compatible authentication with JWT claims carrying role and scope. Authorization decisions use role plus `scope_type` / `scope_id`; a broad corporate scope does not imply permission to mutate raw mine records.
+FastAPI modular monolith + PostgreSQL/PostGIS + Next.js + Flutter.
 
-## 8. AI boundaries
+### Pilot
 
-- Rule-based MRI first.
-- No compliance-facing score without contributing factors.
-- AI severity is a suggestion distinct from worker-selected severity.
-- OCR confidence drives review, not silent acceptance.
-- ML-based MRI remains gated on adequate real data.
+Potentially add Redis, object storage, real OIDC provider, background worker if measured needs appear.
 
-## 9. Infrastructure policy
+### Subsidiary scale
 
-Local MVP infrastructure starts with PostGIS and MinIO. Add Redis/time-series infrastructure only when an approved module has a concrete need. Do not create production-like distributed complexity for presentation value.
+Extract heavy/independently scaling domains first, likely sync, documents/OCR, notifications.
+
+### National scale
+
+Evaluate API gateway, independent services, Kubernetes, HA/DR, observability, SIEM, time-series platform, search, and enterprise IAM based on measured traffic and government hosting requirements.
+
+See `future/FUTURE_ARCHITECTURE.md`.

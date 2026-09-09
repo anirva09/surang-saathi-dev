@@ -1,78 +1,49 @@
-# Product-to-Code Workflow
+# Surang Saathi — Development Workflow
 
 ## Roles
 
-### ChatGPT
+### ChatGPT / product-engineering lead
 
-Owns:
+Owns product scope, UX consistency, architecture, acceptance criteria, code/design review, QA gate, demo story, and documentation authority.
 
-- product scope and prioritization
-- government UX decisions
-- architecture and data contracts
-- implementation packet creation
-- UI/code/diff review
-- QA gates
-- demo story and judge Q&A
-- public-release approval
+### Implementation tools
 
-### Google AI Studio
-
-Owns:
-
-- bounded implementation from the current packet
-- focused tests and verification
-- reporting exact files/commands/results
-- corrections requested after review
-
-It does not independently change product scope or architecture.
+Local coding tools, Google AI Studio, Codex/other agents may be used as accelerators. They are implementation workers, not independent product authorities.
 
 ### GitHub
 
-Owns:
+Canonical source of truth. A tool saying “synced” is not proof; the Git commit/diff is reality.
 
-- canonical repository state
-- branches and commit history
-- diff/review surface
-- automated checks
-- releases
+## Feature loop
 
-## Per-feature loop
+```text
+Define scope + acceptance criteria
+        ↓
+Create private feature branch
+        ↓
+Implement bounded task
+        ↓
+Run tests / typecheck / build / a11y as applicable
+        ↓
+Review diff + UI + architecture
+        ↓
+Fix findings
+        ↓
+APPROVED FOR PRIVATE
+        ↓
+Merge into rebuild/v1
+```
 
-1. Select the next backlog item from `docs/BUILD_STATE.md`.
-2. ChatGPT validates it against the innovation filter and project brief.
-3. ChatGPT creates/updates one implementation packet.
-4. Create the feature branch named in the packet from `rebuild/v1`.
-5. Google AI Studio implements only the packet.
-6. Run packet verification commands.
-7. Inspect GitHub/local diff; capture relevant screenshots for UI work.
-8. ChatGPT reviews product, government UX, architecture, and QA.
-9. Return required corrections to the same branch.
-10. When accepted, mark **APPROVED FOR PRIVATE** and merge to `rebuild/v1`.
-11. Update `docs/BUILD_STATE.md`.
+Stable milestones later merge to private `main`. Public promotion is separate.
 
-## Innovation filter
+## Rule for AI tools
 
-A proposed feature is admitted only when the answer is yes to the important questions:
+Before coding, an implementation agent reads:
 
-| Question | Required |
-|---|---|
-| Solves a real mining/governance problem? | Yes |
-| Strengthens the demo or real operating loop? | Yes |
-| Buildable within SIH constraints? | Yes |
-| Credible in a government/Coal India environment? | Yes |
-| Worth its complexity now? | Yes for current phase |
+1. `PROJECT_BRIEF.md`
+2. `docs/DECISIONS.md`
+3. `docs/ARCHITECTURE.md`
+4. relevant domain doc
+5. task-specific acceptance criteria
 
-Features that fail are deferred or rejected rather than hidden in the backlog.
-
-## Review format
-
-Every meaningful UI/feature review uses:
-
-- Score /10
-- What works
-- What feels unrealistic
-- What a Government designer would change
-- What judges will notice
-- Exact improvements
-
-UI review additionally considers the Mine Worker, Safety Officer, Coal India Manager, and SIH Judge separately.
+If a conflict is found, stop rather than inventing a resolution.

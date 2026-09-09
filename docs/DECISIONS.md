@@ -1,99 +1,80 @@
 # Surang Saathi — Architecture Decision Record
 
 **Status:** Active
-**Authority:** `PROJECT_BRIEF.md` + accepted product leadership decisions
-**Change control:** A decision is superseded only through an explicit new ADR. Implementation convenience never silently edits an accepted decision.
+**Authority:** `PROJECT_BRIEF.md` + accepted ADRs
 
-## ADR-001 — Product name is Surang Saathi
+Accepted decisions are not silently edited for implementation convenience. A changed decision is recorded as a superseding ADR.
 
-**Status:** Accepted
+## ADR-001 — One product identity
 
-All active product, repository, UI, documentation, demo, and public-facing references use **सुरंग साथी / Surang Saathi**. Dual branding is not allowed.
+**Decision:** All active product, repository, UI, demo, and documentation references use **सुरंग साथी / Surang Saathi**. Legacy project names may appear only in `docs/archive/` or explicit migration/history notes.
 
 ## ADR-002 — Offline-first is mandatory
 
-**Status:** Accepted
+Field workflows must function through multi-day zero-connectivity periods using locally generated IDs/timestamps, durable queues, cached reference data, and explicit sync state.
 
-Field workflows must operate with zero network for multi-day periods. Client-generated IDs, local timestamps, cached reference data, durable queues, and explicit sync state are architecture requirements.
+## ADR-003 — Compliance history is append-only
 
-## ADR-003 — Compliance records use immutable events
-
-**Status:** Accepted
-
-Submitted inspections, hazards, corrective actions, approvals, escalations, closures, and corrections are append-only. Corrections are new events referencing earlier records.
+Submitted hazard, inspection, corrective-action, approval, escalation, and closure evidence is never mutated in place. Corrections create new events that reference prior events.
 
 ## ADR-004 — No last-write-wins for compliance data
 
-**Status:** Accepted
+Conflicting or duplicate submissions are retained and surfaced for reconciliation. Safety evidence is never silently overwritten.
 
-Conflicting submissions are retained and surfaced for authorized reconciliation. Safety/compliance evidence is never silently overwritten or dropped.
+## ADR-005 — FastAPI modular monolith for SIH MVP
 
-## ADR-005 — Mine Risk Index is rule-based before ML
+The MVP backend is one FastAPI deployment with explicit domain modules: `auth`, `inspections`, `hazards`, `sync`, `compliance`, `corrective_actions`, `audit`, `notifications`, `risk`, `documents`.
 
-**Status:** Accepted
+**Why:** SIH needs clear domain design without distributed-system overhead.
 
-The MVP uses transparent weighted rules over measurable operational inputs. Production ML scoring is gated on representative real data and evaluation.
+## ADR-006 — Microservices are evolutionary, not initial
 
-## ADR-006 — Risk explainability is mandatory
+A module may become an independently deployed service only when justified by independent scaling, failure/security isolation, ownership, release cadence, or workload characteristics.
 
-**Status:** Accepted
+## ADR-007 — PostgreSQL + PostGIS is the primary data platform
 
-Every compliance-facing risk score includes contributing factors with factor name, weight, and current value. A bare score fails acceptance.
+Transactional and spatial data live in PostgreSQL/PostGIS for the MVP. Add other stores only when an actual workload requires them.
 
-## ADR-007 — MVP tamper evidence uses PostgreSQL SHA-256 hash chaining
+## ADR-008 — Flutter Android-priority mobile app
 
-**Status:** Accepted
+The field client is Flutter with durable offline persistence (SQLite/Drift) and Android as the priority deployment target.
 
-Ledger-relevant records use `SHA256(canonical_content + previous_hash)` in append-only PostgreSQL tables. Blockchain/Hyperledger is not an MVP dependency.
+## ADR-009 — Next.js manager portal
 
-## ADR-008 — Full 3D digital twin is out of scope
+The management/corporate web experience is built in Next.js + TypeScript. It consumes backend contracts rather than duplicating domain logic in the web tier.
 
-**Status:** Accepted
+## ADR-010 — Rule-based MRI before ML
 
-A full 3D mine twin is rejected for the SIH MVP. A simplified 2D mine-section overlay is a later, phase-gated feature.
+The first Mine Risk Index is deterministic and transparent. Production ML is gated on sufficient representative historical data and validation.
 
-## ADR-009 — SIH backend begins as a modular monolith
+## ADR-011 — Explainability contract
 
-**Status:** Accepted
+Every compliance-facing risk result includes contributing factors, weights/current values, and scoring/model version. Bare scores fail acceptance.
 
-Logical backend domains live in one FastAPI deployment for MVP speed and reliability:
+## ADR-012 — AI assists; humans remain accountable
 
-`auth`, `inspections`, `hazards`, `sync`, `compliance`, `corrective_actions`, `audit`, `notifications`, `risk`, `documents`.
+AI may suggest severity, extract OCR fields, or flag anomalies. It may not silently select a worker's severity, approve closure, or hide uncertainty.
 
-Boundaries remain explicit so real-scale extraction is possible later.
+## ADR-013 — Hash-chained PostgreSQL ledger for MVP
 
-## ADR-010 — AI supports governance workflows; AI is not the primary UI
+Tamper evidence uses deterministic canonical payloads and SHA-256 chaining in PostgreSQL. Blockchain/Hyperledger is not an MVP requirement.
 
-**Status:** Accepted
+## ADR-014 — No full 3D digital twin in MVP
 
-The product leads with inspection, accountability, corrective action, escalation, compliance evidence, and auditability. AI assists specific workflow steps.
+A 2D operational mine-section overlay may be considered later. Full 3D is explicitly out of scope.
 
-## ADR-011 — Private engineering source, curated public promotion
+## ADR-015 — Government UX language is locked
 
-**Status:** Accepted
+The product follows geological survey sheets, engineering field notebooks, DGMS-style inspection forms, and government service portals. Glassmorphism, neon/futuristic AI styling, excessive rounded corners, and startup-dashboard aesthetics are rejected.
 
-`surang-saathi-dev` is the private engineering source. `surang-saathi` is a curated public showcase. Public promotion requires an explicit public-release gate and preserves real authorship.
+## ADR-016 — Private development / curated public release
 
-## ADR-012 — GitHub is the canonical source of truth
+`surang-saathi-dev` is the source repository for active development. `surang-saathi` receives only reviewed, reproducible, secret-safe milestones after **APPROVED FOR PUBLIC**.
 
-**Status:** Accepted
+## ADR-017 — One canonical web package manager
 
-Google AI Studio is an implementation workspace. GitHub branches, commits, pull requests, and CI are canonical. Workspace sync state never outranks Git history.
+Use `npm` for the Next.js workspace unless a future accepted ADR changes this. Avoid mixed npm/Bun/pnpm lockfiles and environment-specific hoisting workarounds.
 
-## ADR-013 — Rebuild integrates through `rebuild/v1`
+## ADR-018 — Synthetic/demo data must be labeled
 
-**Status:** Accepted
-
-Existing private history is preserved. Clean rebuilt features branch from and integrate into `rebuild/v1`. After end-to-end rebuild verification, `rebuild/v1` can be merged into private `main` through a separate milestone review.
-
-## ADR-014 — Implementation is packet-bounded
-
-**Status:** Accepted
-
-Every substantial implementation task has a versioned packet under `docs/ai-studio/packets/` defining objective, allowed scope, contracts, acceptance criteria, verification, and stop condition.
-
-## ADR-015 — Approved prior visuals are reference material, not inherited code
-
-**Status:** Accepted
-
-The prior design-system screenshots may inform density, form language, evidence presentation, and government visual tone. Their implementation code is not imported. Current tokens and `docs/UI_PRINCIPLES.md` are authoritative.
+Demo data may be realistic, but must not be represented as live Coal India, DGMS, CPCB, or production sensor data unless an actual integration exists.
