@@ -3,6 +3,7 @@ import logging
 
 from fastapi import FastAPI, Response, status
 
+from app.api.v1.router import api_v1_router
 from app.core.logging import configure_logging
 from app.core.readiness import check_readiness
 from app.modules.evidence.storage import ensure_evidence_bucket
@@ -27,6 +28,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.include_router(api_v1_router)
 
 
 @app.get("/health")
