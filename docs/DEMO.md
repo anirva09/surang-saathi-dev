@@ -1,5 +1,8 @@
 # Surang Saathi — Demo Playbook
 
+> **Rebuild note:** This document defines the target demonstration. A step is shown live only after its implementation is marked complete in `docs/BUILD_STATE.md`; otherwise use an explicitly labeled prepared mock/fixture or omit it.
+
+
 ## Demonstration principle
 
 Do not demo Surang Saathi as a collection of AI features. Demonstrate one governance loop that begins underground and ends with verified management accountability.

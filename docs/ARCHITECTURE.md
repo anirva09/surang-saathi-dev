@@ -1,25 +1,35 @@
-# Surang Saathi — MVP Architecture
+# Surang Saathi — Rebuild MVP Architecture
 
-## 1. Architectural intent
+## 1. Intent
 
-Surang Saathi is designed as a government-grade operational platform for coal-mine governance and compliance. The SIH build uses a **modular monolith** for speed and reliability while preserving the logical boundaries defined in `PROJECT_BRIEF.md`.
+Surang Saathi is a government-grade operating platform for coal-mine governance and compliance. The rebuild optimizes for one load-bearing property: **field evidence captured without connectivity can become accountable, validated, auditable management action without being silently overwritten.**
 
-The architecture is intentionally optimized around one load-bearing workflow: a field event can be captured offline, synchronized without silent overwrite, acted on by management, resolved with evidence, and verified through a tamper-evident history.
+The MVP uses a modular monolith for backend delivery speed while preserving the domain boundaries in the project brief.
 
-## 2. System view
+## 2. Locked architectural invariants
+
+- **Offline-first:** field workflows must remain usable through multi-day zero-connectivity periods.
+- **Append-only:** submitted compliance evidence is never mutated in place.
+- **No silent last-write-wins:** conflicts are retained and surfaced for reconciliation.
+- **Rule-based first:** the Mine Risk Index ships with transparent weighted rules before production ML.
+- **Explainable:** every compliance-facing risk score includes contributing factors.
+- **SHA-256 audit chain:** MVP tamper evidence uses canonical content plus the previous hash in PostgreSQL.
+- **Modular monolith:** logical backend domains remain explicit inside one FastAPI deployment for the SIH MVP.
+
+## 3. System view
 
 ```text
-┌──────────────────────────────┐      ┌──────────────────────────────┐
-│ Flutter Field App            │      │ Next.js Manager Portal       │
-│ Android priority             │      │ Mine / Area / Subsidiary     │
-│ SQLite / Drift offline store │      │ role-scoped web UX           │
-└──────────────┬───────────────┘      └──────────────┬───────────────┘
-               │ REST                                   │ REST
-               └──────────────────┬────────────────────┘
-                                  v
+┌──────────────────────────────┐       ┌──────────────────────────────┐
+│ Flutter Field App            │       │ Next.js Web Portal           │
+│ Android priority             │       │ Manager / Corporate roles    │
+│ SQLite / Drift               │       │ Role-scoped UX               │
+│ offline queue + cache        │       │                              │
+└──────────────┬───────────────┘       └──────────────┬───────────────┘
+               │ REST                                  │ REST
+               └──────────────────┬───────────────────┘
+                                  ▼
                     ┌──────────────────────────────┐
                     │ FastAPI Modular Monolith     │
-                    │                              │
                     │ auth                         │
                     │ inspections                  │
                     │ hazards                      │
@@ -30,164 +40,87 @@ The architecture is intentionally optimized around one load-bearing workflow: a 
                     │ notifications                │
                     │ risk                         │
                     │ documents                    │
-                    └───────────┬──────────┬───────┘
-                                │          │
-                   ┌────────────v───┐  ┌───v────────────────┐
-                   │ PostgreSQL +   │  │ S3-compatible       │
-                   │ PostGIS        │  │ object storage      │
-                   │ events/spatial │  │ MinIO locally       │
-                   └────────────────┘  └────────────────────┘
+                    └──────────┬───────────┬───────┘
+                               │           │
+                   ┌───────────▼────┐ ┌────▼─────────────┐
+                   │ PostgreSQL +   │ │ S3-compatible    │
+                   │ PostGIS        │ │ object storage   │
+                   │ state/spatial  │ │ MinIO locally    │
+                   └────────────────┘ └──────────────────┘
 ```
 
-This diagram describes the intended MVP boundaries; it does not claim that every module has already been implemented.
+This is an intended boundary map, not a claim that every module is already implemented.
 
-## 3. Domain modules
+## 4. Domain ownership
 
 | Module | Owns | Must not own |
 |---|---|---|
-| `auth` | identity claims, role/scope authorization boundaries | domain-specific business rules |
-| `inspections` | inspection records, types, field evidence references | sync transport or statutory escalation |
-| `hazards` | hazard reports, severity, field description/media references | corrective-action approval logic |
+| `auth` | identity claims, role/scope authorization | domain-specific safety/compliance rules |
+| `inspections` | inspection record contracts and evidence references | sync transport, escalation scheduler |
+| `hazards` | hazard report contracts, reported severity, evidence references | corrective-action approval |
 | `sync` | immutable batch intake, idempotency, conflict surfacing | silent conflict resolution |
-| `compliance` | violations, SLA state machine, statutory linkage, escalation state | raw authentication or media storage |
-| `corrective_actions` | assignment, deadline, proof submission, approval/rejection events | destructive mutation of submitted history |
-| `audit` | canonical content hashing, previous-hash chain, verification reports | business-state ownership |
-| `notifications` | delivery requests and channel routing | source-of-truth compliance state |
-| `risk` | rule-based MRI calculation and factor breakdown | opaque unexplainable scores |
-| `documents` | source scans, OCR extraction results, confidence/review state | irreversible auto-accept of low-confidence fields |
+| `compliance` | violation lifecycle, SLA, statutory linkage, escalation | raw authentication/media bytes |
+| `corrective_actions` | assignment, deadline, proof, approval/rejection events | destructive rewriting of submitted history |
+| `audit` | canonical serialization, content hash, previous hash, verification | business-state ownership |
+| `notifications` | delivery requests/channel routing | source-of-truth compliance status |
+| `risk` | rule-based MRI and contributing-factor breakdown | opaque scores |
+| `documents` | scans, OCR extraction, confidence, review state | irreversible acceptance of uncertain fields |
 
-## 4. Golden Workflow data flow
+## 5. Golden Workflow
 
-### 4.1 Field capture
+### 4.1 Offline capture
 
-The mobile client creates a UUID before server contact and records the event locally with device timestamp, mine/section context, GPS, structured fields, and media metadata. Photo/audio content is hashed at capture time before sync.
+The field client creates a client UUID before server contact, records a local timestamp, stores structured form data in SQLite/Drift, hashes captured media, and records local geofence evaluation against cached geometry.
 
-A field submission is successful locally when it is durably queued, not when the network responds.
+A queued event is durable across app restart and prolonged offline periods.
 
-### 4.2 Sync contract
+### 4.2 Sync
 
-The client uploads immutable event batches. Each event must carry enough identity to support idempotency and reconciliation:
+When connectivity returns, the client uploads immutable events using idempotency keys/client event IDs.
 
-```text
-client_event_id
-client_device_id
-actor_id
-mine_id
-section_id (when applicable)
-event_type
-client_timestamp
-payload
-media_hashes[]
-```
+Expected outcomes:
 
-The server may return one of these synchronization outcomes:
-
-```text
-accepted
-already_accepted
-conflict_flagged
-rejected_invalid
-```
-
-`already_accepted` is an idempotent success. `conflict_flagged` retains the incoming evidence and creates manager-visible reconciliation work. The server never resolves compliance evidence by last-write-wins.
+- new event → appended
+- same event retried → idempotent success
+- duplicate/conflicting evidence → retained and flagged
+- never silent last-write-wins
 
 ### 4.3 Server validation
 
-After intake, authoritative validation can re-check mine/section geofence membership using PostGIS and verify media hashes against uploaded objects. Client-side checks improve field feedback; server validation remains authoritative after sync.
+The authoritative backend re-validates geofence position against PostGIS and confirms uploaded media hashes. Device-local validation and server validation remain separately represented.
 
-### 4.4 Governance workflow
+### 4.4 Manager ownership
 
-A qualifying hazard can open a violation/corrective-action workflow. The state progression follows the brief:
+The manager reviews evidence and assigns a corrective action with responsible person and deadline. The compliance lifecycle follows:
 
-```text
-Open → Acknowledged → Overdue → Escalated → Resolved
-```
+`OPEN → ACKNOWLEDGED → OVERDUE → ESCALATED → RESOLVED`.
 
-Transitions are recorded as events. Closure requires evidence and manager approval; a submitted historic event is never rewritten to make the timeline appear cleaner.
+### 4.5 Resolution and audit
 
-### 4.5 Audit chain
+Proof submission and manager approval create new events. Ledger-relevant events are written using canonical content plus the previous ledger hash. Historical submitted events are not mutated in place.
 
-Ledger-relevant canonical events are serialized deterministically and chained:
+### 4.6 Risk and roll-up
 
-```text
-entry_hash = SHA256(canonical_content + previous_hash)
-```
+Once the Phase-1 loop is stable, the rule-based MRI recomputes from operational inputs and returns score plus contributing factors. Higher-level views aggregate without giving corporate users destructive raw-record edit rights.
 
-Verification recomputes the chain and reports any break. The ledger proves tamper evidence for recorded events; it must not be presented as a blockchain.
+## 6. Core data contracts
 
-## 5. Risk engine contract
+Stable identifiers should be UUIDs for offline-created entities/events. Exact schemas are introduced by their implementation packets; do not create speculative database models during foundation work.
 
-The MVP risk engine is rule-based. A response must expose both score and reasons:
+The project brief's core entities remain authoritative: User, Mine, MineSection, Inspection, HazardReport, CorrectiveAction, Violation, Contractor, MineRiskScore, AuditLedgerEntry, Document, SensorReading.
 
-```json
-{
-  "mine_id": "...",
-  "score": 72,
-  "band": "high",
-  "model_version": "rules-v1",
-  "computed_at": "...",
-  "contributing_factors": [
-    {
-      "name": "overdue_corrective_actions",
-      "weight": 0.30,
-      "current_value": 4,
-      "contribution": 18
-    }
-  ]
-}
-```
+## 7. Auth model
 
-A compliance-facing screen must not display a risk number without the contributing-factor explanation.
+OAuth2/OIDC-compatible authentication with JWT claims carrying role and scope. Authorization decisions use role plus `scope_type` / `scope_id`; a broad corporate scope does not imply permission to mutate raw mine records.
 
-## 6. Offline mobile architecture
+## 8. AI boundaries
 
-The mobile app uses SQLite via Drift for:
+- Rule-based MRI first.
+- No compliance-facing score without contributing factors.
+- AI severity is a suggestion distinct from worker-selected severity.
+- OCR confidence drives review, not silent acceptance.
+- ML-based MRI remains gated on adequate real data.
 
-- queued immutable events
-- locally cached mine/section reference data
-- cached geofence polygons required by active assignments
-- sync status and retry metadata
-- local views of submitted reports
+## 9. Infrastructure policy
 
-Multi-day offline operation is an acceptance requirement. Connectivity detection starts synchronization; it does not gate capture.
-
-## 7. Security and authorization boundary
-
-OAuth2/OIDC-compatible authentication issues claims carrying role and scope. Authorization is enforced server-side using at least:
-
-```text
-role
-scope_type
-scope_id
-```
-
-The web client may hide inaccessible controls for usability, but client-side visibility is never the security boundary.
-
-Corporate/ministry users are read-heavy and may not edit raw field records simply because they have broad geographic scope.
-
-## 8. Storage boundaries
-
-**PostgreSQL + PostGIS** stores transactional records, event history, spatial polygons, reconciliation state, and the audit chain.
-
-**MinIO/S3** stores photos, audio, scanned source documents, and generated dossier artifacts. Database records store object references plus integrity metadata rather than binary blobs.
-
-Time-series storage is intentionally not introduced in Milestone 0. Add TimescaleDB/InfluxDB only when sensor ingestion becomes a real implementation task.
-
-## 9. Production extraction path
-
-The modular monolith is not a denial of the brief's production service model. Extraction should occur only when operational evidence justifies it. Candidate extraction boundaries are `sync`, `documents/OCR`, `notifications`, and `risk` because they have distinct scaling or runtime characteristics.
-
-A module is ready for extraction only when its API, data ownership, error contract, and observability requirements are stable enough that separation improves operations rather than architecture diagrams.
-
-## 10. Milestone sequence
-
-1. Foundation and contracts.
-2. Offline hazard/inspection capture.
-3. Immutable synchronization and manager review.
-4. Corrective-action lifecycle and audit verification.
-5. Statutory automation and explainable MRI.
-6. GIS/dossier generation.
-7. OCR, multilingual voice, sensors, and phase-gated AI additions.
-8. Contractor/WhatsApp/2D section-overlay differentiation after the core is stable.
-
-The canonical Section 10 action cycle in `PROJECT_BRIEF.md` remains the integration-test backbone across milestones.
+Local MVP infrastructure starts with PostGIS and MinIO. Add Redis/time-series infrastructure only when an approved module has a concrete need. Do not create production-like distributed complexity for presentation value.

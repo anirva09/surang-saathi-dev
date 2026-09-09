@@ -1,0 +1,44 @@
+name: Governance checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - rebuild/v1
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify repository governance
+        run: python scripts/verify-governance.py
+
+      - name: Verify changed-file whitespace
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE="origin/${{ github.base_ref }}"
+            MERGE_BASE="$(git merge-base HEAD "$BASE")"
+            git diff --check "$MERGE_BASE"...HEAD
+          else
+            BEFORE="${{ github.event.before }}"
+            if [[ -n "$BEFORE" && "$BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+              git diff --check "$BEFORE"...HEAD
+            else
+              git show --check --format=fuller HEAD
+            fi
+          fi

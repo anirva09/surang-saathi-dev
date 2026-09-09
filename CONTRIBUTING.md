@@ -1,116 +1,134 @@
 # Contributing to Surang Saathi
 
-This repository is optimized for disciplined SIH execution: small reviewable changes, explicit product decisions, and a stable demo path.
+Surang Saathi is being built as a government-grade SIH MVP. Changes must be small enough to review, explicit enough to audit, and realistic enough to defend in front of Coal India officials and SIH judges.
 
-## Before starting work
-
-Read:
+## Read before changing code
 
 1. `PROJECT_BRIEF.md`
 2. `docs/DECISIONS.md`
 3. `docs/ARCHITECTURE.md`
-4. the implementation packet for the current task
+4. `docs/UI_PRINCIPLES.md`
+5. `docs/GITHUB_STRATEGY.md`
+6. the current task packet under `docs/ai-studio/packets/`
 
-Do not invent scope that is not in the brief or approved task.
+Do not invent scope outside the brief or approved packet.
 
-## Branches
+## Branch model
 
-Use a short branch with one purpose:
+Permanent private branches:
+
+```text
+main
+└── rebuild/v1
+```
+
+All implementation work branches from `rebuild/v1` during the rebuild:
 
 ```text
 feat/<scope>
 fix/<scope>
-docs/<scope>
 chore/<scope>
+docs/<scope>
+test/<scope>
 ```
 
 Examples:
 
 ```text
-feat/offline-hazard-report
-feat/sync-engine
-feat/manager-hazard-review
+feat/design-system-foundation
+feat/backend-foundation
+feat/offline-hazard-capture
+feat/immutable-sync
 fix/sync-idempotency
-docs/demo-flow
 ```
 
-Private `main` should remain a usable internal milestone.
+Do not implement directly on `main` or `rebuild/v1` except explicit repository-governance maintenance approved for that branch.
+
+## Implementation cycle
+
+```text
+approved packet
+→ feature branch
+→ implementation
+→ focused tests
+→ full affected verification
+→ structured implementation report
+→ ChatGPT product/architecture/QA review
+→ corrections if required
+→ APPROVED FOR PRIVATE
+→ merge to rebuild/v1
+```
+
+A passing build is not approval by itself.
 
 ## Commits
 
-Use Conventional Commit-style messages that explain the engineering story:
+Use meaningful Conventional Commit-style messages:
 
 ```text
-chore: initialize Surang Saathi foundation
-feat(auth): add scoped role authorization
-feat(mobile): add offline hazard capture
-feat(sync): add immutable event synchronization
-feat(compliance): add corrective action state machine
+feat(web): add government field control primitives
+feat(sync): add idempotent immutable event intake
+fix(mobile): retain queued media across restart
 feat(audit): add hash-chain verification
-fix(sync): retain conflicting field submissions
 ```
 
-Avoid ambiguous history such as `update`, `fix2`, or `final-final`.
+Avoid `update`, `fix2`, `final`, `final-final`, or history rewritten only for appearance.
 
-Never rewrite or fabricate another contributor's Git authorship. Promotion to the public repository must preserve original author metadata.
+Never fabricate, replace, or rewrite another contributor's authorship.
 
-## Implementation expectations
+## Dependency policy
 
-- Prefer focused files and explicit module boundaries.
-- Reuse existing components/contracts before creating duplicates.
-- Do not rewrite unrelated code as part of a feature.
-- Add focused automated tests for behavioral changes.
-- Run affected tests before requesting review.
-- Surface limitations and cross-module impact explicitly.
-- Do not add dependencies without explaining the reason and maintenance cost.
+Before adding a dependency, state:
 
-## Product review gates
+- what concrete problem it solves
+- why existing platform/library capabilities are insufficient
+- maintenance/security cost
+- whether it affects offline behavior or bundle size
 
-A change is not complete merely because it builds.
+Avoid adding infrastructure to look sophisticated.
 
-### Private milestone gate
+## Test expectations
 
-Required:
+Behavioral changes require focused tests. High-value tests include:
 
-- implementation matches the approved scope
-- architecture remains consistent with ADRs
-- affected automated tests pass
-- relevant P0 QA checks pass
+- offline durability and retry behavior
+- idempotency and conflict retention
+- state-machine transitions
+- authorization scope boundaries
+- risk explainability contracts
+- hash-chain verification
+- accessibility and field control semantics
+
+Avoid snapshot-test spam that does not protect behavior.
+
+## Private review gate
+
+A branch can merge into `rebuild/v1` only when:
+
+- packet scope is complete and no unrelated scope was added
+- affected tests pass
+- type/lint/build checks pass where applicable
+- architecture and ADRs remain consistent
+- accessibility checks pass for UI work
 - no secrets or production personal data are staged
-- demo path is not degraded
+- no unsupported product/AI claims appear
+- demo-critical paths are not degraded
+- ChatGPT review says **APPROVED FOR PRIVATE**
 
-### Public promotion gate
-
-Required:
-
-- product review approved
-- architecture review approved
-- P0 QA passes
-- documentation reflects current behavior
-- public setup is reproducible
-- secret scan passes
-- screenshots/demo assets are current when applicable
-- internal-only notes/debug artifacts are excluded
-
-## Private → public promotion
+## Public promotion gate
 
 `surang-saathi-dev` is the engineering source. `surang-saathi` is curated.
 
-Promote only approved commits/milestones. Cherry-pick is acceptable because it preserves original author metadata; the person performing the promotion becoming the committer is normal Git behavior.
+Nothing is promoted until an explicit **APPROVED FOR PUBLIC** review confirms:
 
-Do not mirror every private WIP commit into the public repository.
+- product coherence
+- architecture coherence
+- P0 QA
+- reproducible setup
+- current documentation
+- secret scan
+- license/attribution checks
+- public-safe screenshots/demo assets
+- exclusion of internal prompts, QA working notes, and private data
 
-## Security
-
-Never commit:
-
-- `.env`
-- OAuth client secrets
-- database passwords
-- API tokens
-- private keys
-- production credentials
-- personal data used only for testing
-- unapproved Coal India internal material
-
-Use `.env.example` for variable names and local-only placeholder values.
+See `docs/GITHUB_STRATEGY.md`.

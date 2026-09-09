@@ -1,105 +1,100 @@
-# Surang Saathi — QA Checklist
+# Surang Saathi — QA and Review Gates
 
-This checklist is a release gate, not a suggestion. A P0 failure blocks the demo/public milestone. P1 failures may be accepted only when documented with an explicit workaround that does not compromise safety, compliance integrity, or the main demo path.
+## P0 product invariants
 
-## P0 — Demo and data-integrity blockers
+A release fails if any are violated:
 
-### Offline field capture
+- product name is Surang Saathi only
+- offline-first field behavior is preserved
+- submitted compliance evidence is append-only
+- no silent last-write-wins
+- risk scores remain explainable
+- rule-based MRI precedes unsupported production ML claims
+- low-confidence OCR requires human review
+- hash-chained PostgreSQL remains the MVP audit mechanism
+- no full 3D digital twin enters MVP scope
+- synthetic/demo data is not presented as live Coal India data
 
-- [ ] Hazard/inspection can be created with airplane mode enabled.
-- [ ] Client UUID exists before any server request.
-- [ ] Local timestamp and actor/mine context persist across app restart.
-- [ ] Photo/audio metadata remains associated with the queued event after restart.
-- [ ] User sees `Queued`, `Syncing`, `Synced`, or `Conflict` state without opening a debug screen.
-- [ ] Multi-item offline queue survives process termination and device restart simulation.
+## Repository / governance
 
-### Sync and conflict safety
+- current work is on the branch required by the packet
+- public `surang-saathi` repo is untouched unless public approval exists
+- no secrets or credentials are staged
+- no obsolete product naming or retired implementation protocol appears in active tracked files
+- `python scripts/verify-governance.py` passes
+- `git diff --check` passes
+- commit authorship is real and preserved
 
-- [ ] Retrying the same `client_event_id` does not create a second canonical event.
-- [ ] Duplicate delivery returns idempotent success rather than an error that encourages manual resubmission.
-- [ ] Conflicting submissions are both retained.
-- [ ] Conflict is visible to the correct manager role.
-- [ ] No compliance endpoint silently implements last-write-wins.
-- [ ] Partial batch failure does not mark unsuccessful events as synced.
+## Web UI
 
-### Location and media integrity
+For affected work:
 
-- [ ] Client performs local geofence feedback when cached geometry is available.
-- [ ] Server re-validates geofence using authoritative geometry after sync.
-- [ ] Media hash is generated at capture time.
-- [ ] Server can detect a changed media payload when hash verification is executed.
-- [ ] UI distinguishes `client check` from `server verified` where relevant.
+- typecheck passes
+- lint passes
+- production build passes
+- focused component/behavior tests pass
+- accessibility audit passes
+- no horizontal overflow at 360 px
+- verify 360 px / 768 px / 1440 px
+- worker-facing touch targets meet 40–48 px rules
+- operational state uses wording/icon plus color, not color alone
+- keyboard focus is visible
+- labels/errors/descriptions are programmatically associated
+- Hindi/Devanagari text is not clipped
 
-### Corrective-action lifecycle
+## Mobile / offline
 
-- [ ] Manager can review a hazard and create a corrective action.
-- [ ] Action has owner and deadline.
-- [ ] Resolution proof is stored as a new event/evidence record.
-- [ ] Manager approval/rejection is auditable.
-- [ ] Submitted historical events cannot be edited in place to erase prior values.
-- [ ] Resolved state is reached only through the allowed workflow.
+- queue survives process restart
+- queued events retain client UUID and timestamps
+- media is not lost during prolonged offline state
+- cached reference data and geofence geometry work offline
+- user can see queued/syncing/synced/conflict/offline state
+- network recovery triggers safe retry
+- retry does not create duplicate logical events
+- destructive/ledger-relevant submission requires consequence-aware confirmation
 
-### Audit ledger
+## Sync
 
-- [ ] Ledger entry stores current content hash and previous hash.
-- [ ] Recomputing an unchanged chain verifies successfully.
-- [ ] Mutating historical canonical test data causes verification failure.
-- [ ] UI/documentation calls this a tamper-evident hash chain, not a blockchain.
+- same event retry is idempotent
+- duplicate event delivery is not duplicated in state
+- real conflict preserves both claims
+- manager reconciliation state is explicit
+- server geofence result is distinct from client/local result
+- media hash mismatch is surfaced and never normalized away
 
-### Role and scope access
+## Compliance / corrective actions
 
-- [ ] Mine-scoped user cannot access another mine's raw records.
-- [ ] Area/subsidiary manager sees only records inside authorized scope.
-- [ ] Corporate/ministry read scope does not grant raw-record edit permission.
-- [ ] Server rejects unauthorized access even if a client manually constructs the request.
+- only authorized role/scope can assign/approve/escalate
+- state transitions reject illegal jumps
+- SLA deadline and owner are visible
+- overdue/escalated state is deterministic
+- closure requires evidence/approval path defined by the workflow
+- historical events remain queryable after correction
 
-### Repository and demo safety
+## Audit ledger
 
-- [ ] No credentials, private keys, access tokens, `.env`, production URLs with embedded credentials, or personal test data are staged.
-- [ ] Demo data is synthetic or explicitly labeled as non-production.
-- [ ] Demo reset procedure restores a known state.
-- [ ] Golden Workflow can be completed without relying on external services that are not guaranteed during judging.
-- [ ] Public-repo promotion excludes internal-only notes, temporary dumps, and private debugging artifacts.
+- canonical serialization is deterministic
+- previous hash linkage is correct
+- changing an earlier test record fails verification
+- ledger write failures do not falsely report successful permanent completion
+- verification report identifies the failed link/record
 
-## P1 — Product quality
+## Risk
 
-### Field usability
+- score always includes contributing factors
+- factor names, weights, current values are visible
+- scoring rule/model version is recorded
+- deterministic test fixtures reproduce expected score
+- UI does not imply statistical certainty beyond the rule system
 
-- [ ] Primary field actions meet large-touch-target expectations.
-- [ ] Critical tasks do not require precise typing when structured choices or voice input are more appropriate.
-- [ ] Destructive/irreversible submission requires explicit confirmation.
-- [ ] Sync state remains understandable in poor connectivity.
-- [ ] Error copy tells the worker what happened and whether data is safely stored.
+## Public-release gate
 
-### Language and copy
+Before **APPROVED FOR PUBLIC**:
 
-- [ ] Hindi/Bengali/Odia/English architecture does not hard-code English-only domain values into storage contracts.
-- [ ] Translated labels do not change statutory identifiers or stored canonical codes.
-- [ ] Voice/mic affordance placement is consistent on supported field inputs when that feature is active.
-
-### Manager web quality
-
-- [ ] Dashboard prioritizes: unsafe items, overdue items, ownership, and required action.
-- [ ] Empty states explain what the user can do next.
-- [ ] Loading, error, stale-data, and permission-denied states are designed.
-- [ ] Tables remain usable at common laptop widths.
-- [ ] Status color is never the only indicator of severity or state.
-
-### Explainable risk
-
-- [ ] MRI score includes `model_version`.
-- [ ] Every score displays contributing factors.
-- [ ] UI does not imply predictive certainty that the underlying rule system does not provide.
-
-## Pre-public release gate
-
-- [ ] Product review approved.
-- [ ] Architecture review approved.
-- [ ] P0 checklist passes.
-- [ ] Known P1 exceptions documented.
-- [ ] `git diff --check` passes.
-- [ ] Automated test suite passes.
-- [ ] Secret scan passes.
-- [ ] README setup was followed from a clean environment or CI equivalent.
-- [ ] Screenshots/demo assets match current UI.
-- [ ] Commit authorship is preserved during promotion.
+- setup works from a clean clone
+- README and architecture match the released build
+- screenshots/demo assets are current
+- no internal prompts, hidden QA notes, private fixture data, or secrets
+- dependency licenses/attributions are present
+- production claims are evidence-backed
+- 2-minute and 5-minute demos are rehearsable offline
