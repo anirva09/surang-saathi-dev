@@ -16,6 +16,10 @@ out/
 dist/
 coverage/
 *.tsbuildinfo
+
+# Generated test output
+playwright-report/
+test-results/
 .npm/
 .pnpm-store/
 
