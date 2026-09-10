@@ -2,7 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Typography architecture.
+ *
+ * Noto Sans / Noto Sans Devanagari are named first and resolved from the
+ * user's system when present, with a government-document-appropriate fallback
+ * chain behind them. There is deliberately no build-time font download, so a
+ * blocked network can never fail the build.
+ *
+ * To self-host later: drop woff2 files into /public/fonts, add @font-face
+ * blocks here, and nothing else changes — every component already consumes
+ * these two variables.
+ */
+:root {
+  --font-sans: "Noto Sans", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-devanagari: "Noto Sans Devanagari", "Nirmala UI", "Mangal",
+    "Kohinoor Devanagari", var(--font-sans);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background-color: theme('colors.background');
-  color: theme('colors.text');
+  background-color: theme("colors.background");
+  color: theme("colors.text");
+  font-family: var(--font-sans);
+}
+
+/*
+ * Devanagari sits on a taller line box than Latin at the same size — matras
+ * extend above and below the baseline. When Hindi is the active interface
+ * language the whole document switches stack and loosens leading, so no
+ * component has to opt in and English mode never inherits Devanagari metrics.
+ */
+body.locale-hi {
+  font-family: var(--font-devanagari);
+  line-height: 1.6;
+}
+
+.font-devanagari {
+  font-family: var(--font-devanagari);
+}
+
+/* Focus is always visible and never removed, only restyled. */
+:focus-visible {
+  outline: 2px solid theme("colors.primary");
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

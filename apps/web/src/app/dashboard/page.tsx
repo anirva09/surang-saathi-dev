@@ -1,48 +1,67 @@
 import React from "react";
 import type { Metadata } from "next";
-import { PortalMasthead } from "@/components/layout/PortalMasthead";
-import { PortalFooter } from "@/components/layout/PortalFooter";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { KpiGrid } from "@/components/dashboard/KpiGrid";
-import { PriorityActionQueue } from "@/components/dashboard/PriorityActionQueue";
-import { MineRiskPanel } from "@/components/dashboard/MineRiskPanel";
-import { ComplianceDeadlines } from "@/components/dashboard/ComplianceDeadlines";
-import { EvidenceExceptions } from "@/components/dashboard/EvidenceExceptions";
-import { RecentSafetyActivity } from "@/components/dashboard/RecentSafetyActivity";
+import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
+import { DashboardView } from "@/components/dashboard/DashboardView";
+import { ApiErrorState } from "@/components/state/ApiErrorState";
+import { DEMO_MINE_ID } from "@/lib/api/client";
+import { getDashboardSummary, listHazards } from "@/lib/api/endpoints";
+import { toApiFailure, type ApiFailure } from "@/lib/api/failure";
+import type {
+  DashboardSummaryOut,
+  HazardListItemOut,
+} from "@/lib/api/contract";
 
 export const metadata: Metadata = {
   title: "Safety Dashboard — Surang Saathi",
   description:
-    "Priority safety, compliance and corrective-action status for the selected mine. SIH 2026 prototype with synthetic demonstration data.",
+    "Live safety, compliance and corrective-action position for the selected mine, read from the Surang Saathi API. SIH 2026 prototype.",
 };
 
-export default function DashboardPage() {
+/**
+ * Rendered per request: safety figures are never served from a cache.
+ */
+export const dynamic = "force-dynamic";
+
+/**
+ * The dashboard reads the API on the server. If the API is down the page shows
+ * an error state that names the failure — it does not fall back to demonstration
+ * data, because a dashboard that invents its numbers is worse than one that
+ * admits it has none.
+ *
+ * The summary is required; the attention list is supporting detail, so its own
+ * failure is reported in place rather than replacing the whole screen.
+ */
+export default async function DashboardPage() {
+  const [summaryResult, hazardsResult] = await Promise.allSettled([
+    getDashboardSummary(DEMO_MINE_ID),
+    listHazards({ mineId: DEMO_MINE_ID, limit: 5 }),
+  ]);
+
+  if (summaryResult.status === "rejected") {
+    return (
+      <WorkspaceShell>
+        <ApiErrorState as="h1" failure={toApiFailure(summaryResult.reason)} />
+      </WorkspaceShell>
+    );
+  }
+
+  const summary: DashboardSummaryOut = summaryResult.value;
+
+  let attention: HazardListItemOut[] | null = null;
+  let attentionFailure: ApiFailure | null = null;
+  if (hazardsResult.status === "fulfilled") {
+    attention = hazardsResult.value.items;
+  } else {
+    attentionFailure = toApiFailure(hazardsResult.reason);
+  }
+
   return (
-    <>
-      <PortalMasthead />
-
-      <main id="main-content" tabIndex={-1} className="bg-background">
-        <DashboardHeader />
-
-        <div className="mx-auto max-w-[1440px] px-4 md:px-8 py-6 flex flex-col gap-8">
-          <KpiGrid />
-
-          {/* Decision area: the queue leads, risk supports it. */}
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(300px,1fr)] gap-6 items-start">
-            <PriorityActionQueue />
-            <MineRiskPanel />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <ComplianceDeadlines />
-            <EvidenceExceptions />
-          </div>
-
-          <RecentSafetyActivity />
-        </div>
-      </main>
-
-      <PortalFooter />
-    </>
+    <WorkspaceShell>
+      <DashboardView
+        summary={summary}
+        attention={attention}
+        attentionFailure={attentionFailure}
+      />
+    </WorkspaceShell>
   );
 }

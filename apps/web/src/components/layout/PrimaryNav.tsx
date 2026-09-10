@@ -26,17 +26,16 @@ export function PrimaryNav() {
 
   return (
     <nav
-      aria-label="Primary"
+      aria-label="Portal"
       className="w-full bg-primary text-surface border-b border-primary"
     >
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
-        {/* Mobile disclosure */}
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          aria-controls="primary-nav-menu"
-          className="lg:hidden flex items-center gap-2 w-full min-h-[48px] py-2 text-[0.875rem] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-[2px]"
+          aria-controls="portal-nav-menu"
+          className="lg:hidden flex items-center gap-2 w-full min-h-[48px] py-2 text-[0.875rem] font-medium rounded-[2px]"
         >
           {open ? (
             <X className="w-5 h-5" aria-hidden="true" />
@@ -47,12 +46,9 @@ export function PrimaryNav() {
         </button>
 
         <ul
-          id="primary-nav-menu"
+          id="portal-nav-menu"
           data-state={open ? "expanded" : "collapsed"}
           className={cn(
-            // Desktop is always a horizontal row; below lg the disclosure
-            // decides. Both display utilities are stated explicitly so the
-            // result never depends on utility ordering in the built CSS.
             "lg:flex lg:flex-wrap lg:items-center lg:gap-x-1",
             open ? "block pb-2 lg:pb-0" : "hidden"
           )}
@@ -68,7 +64,6 @@ export function PrimaryNav() {
                   className={cn(
                     "flex items-center min-h-[44px] lg:min-h-[42px] px-3 text-[0.875rem] font-medium rounded-[2px]",
                     "border-b-2 lg:border-b-[3px] transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
                     active
                       ? "border-accent bg-black/15"
                       : "border-transparent hover:bg-black/15"

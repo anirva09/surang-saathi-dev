@@ -6,9 +6,14 @@ export type SyncState = "QUEUED" | "SYNCING" | "SYNCED" | "CONFLICT" | "OFFLINE"
 
 export interface SyncStatusProps extends React.HTMLAttributes<HTMLDivElement> {
   state: SyncState;
+  /**
+   * Overrides the built-in English wording. Localized screens pass a
+   * translated string; the design-system reference page relies on the default.
+   */
+  label?: string;
 }
 
-export function SyncStatus({ state, className, ...props }: SyncStatusProps) {
+export function SyncStatus({ state, label, className, ...props }: SyncStatusProps) {
   const configs: Record<SyncState, { label: string; icon: any; colorClass: string }> = {
     QUEUED: { label: "Queued for sync", icon: Cloud, colorClass: "text-warningInk" },
     SYNCING: { label: "Syncing...", icon: RefreshCw, colorClass: "text-primary animate-spin" },
@@ -30,7 +35,7 @@ export function SyncStatus({ state, className, ...props }: SyncStatusProps) {
       {...props}
     >
       <Icon className="w-4 h-4" aria-hidden="true" />
-      <span>{config.label}</span>
+      <span>{label ?? config.label}</span>
     </div>
   );
 }

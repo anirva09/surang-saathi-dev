@@ -2,6 +2,12 @@ import React from "react";
 import Link from "next/link";
 import { SurangMark } from "./SurangMark";
 
+/**
+ * Officer-portal footer, used by /dashboard.
+ *
+ * The public outreach site uses GovernmentFooter instead. Session 2 re-skins
+ * this to the locked Golden Master system.
+ */
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
   [
     {
@@ -58,7 +64,7 @@ export function PortalFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="inline-flex text-[0.875rem] leading-snug text-surface/90 hover:text-surface hover:underline underline-offset-2 rounded-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className="inline-flex text-[0.875rem] leading-snug text-surface/90 hover:text-surface hover:underline underline-offset-2 rounded-[2px]"
                     >
                       {link.label}
                     </Link>
@@ -98,10 +104,9 @@ export function PortalFooter() {
                 regulatory or production system is connected.
               </p>
               <p className="text-[0.75rem] text-surface/70 mt-3">
-                Current milestone: Web MVP — portal homepage and manager safety
-                dashboard. The hazard register, inspection register, corrective
-                actions, compliance and audit ledger screens are not yet
-                implemented.
+                Current milestone: public site and manager safety dashboard. The
+                hazard register, inspection register, corrective actions,
+                compliance and audit ledger screens are not yet implemented.
               </p>
             </div>
           </div>

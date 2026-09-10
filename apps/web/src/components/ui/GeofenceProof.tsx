@@ -6,9 +6,14 @@ export type GeofenceState = "LOCAL_VALID" | "SERVER_PENDING" | "SERVER_VERIFIED"
 
 export interface GeofenceProofProps extends React.HTMLAttributes<HTMLDivElement> {
   state: GeofenceState;
+  /**
+   * Overrides the built-in English wording. Localized screens pass a
+   * translated string; the design-system reference page relies on the default.
+   */
+  label?: string;
 }
 
-export function GeofenceProof({ state, className, ...props }: GeofenceProofProps) {
+export function GeofenceProof({ state, label, className, ...props }: GeofenceProofProps) {
   const configs: Record<GeofenceState, { label: string; icon: any; colorClass: string }> = {
     LOCAL_VALID: { label: "Device verified", icon: MapPin, colorClass: "text-text" },
     SERVER_PENDING: { label: "Verifying with server...", icon: Clock, colorClass: "text-warningInk" },
@@ -30,7 +35,7 @@ export function GeofenceProof({ state, className, ...props }: GeofenceProofProps
       {...props}
     >
       <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-      <span>{config.label}</span>
+      <span>{label ?? config.label}</span>
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
+import { useT } from "@/i18n/LanguageProvider";
+import type { MessageKey } from "@/i18n/messages.en";
 
 type TextScale = "sm" | "base" | "lg";
 
@@ -13,17 +15,18 @@ const SCALES: Record<TextScale, string> = {
   lg: "118.75%",
 };
 
-const OPTIONS: { scale: TextScale; symbol: string; name: string }[] = [
-  { scale: "sm", symbol: "A-", name: "Smaller text size" },
-  { scale: "base", symbol: "A", name: "Default text size" },
-  { scale: "lg", symbol: "A+", name: "Larger text size" },
+const OPTIONS: { scale: TextScale; symbol: string; key: MessageKey }[] = [
+  { scale: "sm", symbol: "A-", key: "a11y.textSmaller" },
+  { scale: "base", symbol: "A", key: "a11y.textDefault" },
+  { scale: "lg", symbol: "A+", key: "a11y.textLarger" },
 ];
 
 /**
  * Real text-resize controls — they scale the document root, so every rem-based
- * size on the page responds. Not decorative.
+ * size on the page responds. Rendered exactly once per page.
  */
 export function AccessibilityControls({ className }: { className?: string }) {
+  const t = useT();
   const [scale, setScale] = useState<TextScale>("base");
 
   useEffect(() => {
@@ -33,55 +36,28 @@ export function AccessibilityControls({ className }: { className?: string }) {
   const apply = useCallback((next: TextScale) => setScale(next), []);
 
   return (
-    <div className={cn("flex items-center gap-3", className)}>
-      <div
-        className="flex items-center gap-1"
-        role="group"
-        aria-label="Text size"
-      >
-        {OPTIONS.map((option) => (
-          <button
-            key={option.scale}
-            type="button"
-            onClick={() => apply(option.scale)}
-            aria-pressed={scale === option.scale}
-            className={cn(
-              "min-w-[28px] min-h-[28px] px-1.5 text-[0.75rem] font-medium rounded-[2px] border transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              scale === option.scale
-                ? "border-primary bg-primary text-surface"
-                : "border-border bg-surface text-text hover:bg-black/5"
-            )}
-          >
-            <span aria-hidden="true">{option.symbol}</span>
-            <span className="sr-only">{option.name}</span>
-          </button>
-        ))}
-      </div>
-
-      <div
-        className="flex items-center gap-1"
-        role="group"
-        aria-label="Interface language"
-      >
+    <div
+      className={cn("flex items-center gap-1", className)}
+      role="group"
+      aria-label={t("a11y.textSize")}
+    >
+      {OPTIONS.map((option) => (
         <button
+          key={option.scale}
           type="button"
-          aria-pressed={true}
-          className="min-h-[28px] px-2 text-[0.75rem] font-medium rounded-[2px] border border-primary bg-primary text-surface"
+          onClick={() => apply(option.scale)}
+          aria-pressed={scale === option.scale}
+          className={cn(
+            "min-w-[26px] min-h-[26px] px-1.5 text-[0.75rem] font-medium rounded-sm border transition-colors",
+            scale === option.scale
+              ? "border-primary bg-primary text-surface"
+              : "border-transparent text-textMuted hover:bg-text/5 hover:text-text"
+          )}
         >
-          English
+          <span aria-hidden="true">{option.symbol}</span>
+          <span className="sr-only">{t(option.key)}</span>
         </button>
-        <button
-          type="button"
-          disabled
-          aria-disabled={true}
-          title="A full Hindi interface is planned. This prototype ships bilingual labels on field-facing content."
-          className="min-h-[28px] px-2 text-[0.75rem] font-medium rounded-[2px] border border-border bg-surface text-text/80 opacity-60 cursor-not-allowed"
-        >
-          हिन्दी
-          <span className="sr-only"> — not available in this prototype</span>
-        </button>
-      </div>
+      ))}
     </div>
   );
 }

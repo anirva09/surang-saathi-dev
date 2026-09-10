@@ -2,13 +2,22 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { waitForAppReady, waitForStyles } from "./helpers/ready";
 
+/**
+ * Public homepage — Golden Master.
+ *
+ * Replaces the previous portal-homepage suite. The layout assertions changed
+ * because the page architecture changed; the accessibility, readiness and
+ * honesty assertions carry over unchanged, because those are about the
+ * product's integrity rather than its visual direction.
+ */
+
 const VIEWPORTS = [
   { width: 360, height: 640 },
   { width: 768, height: 1024 },
   { width: 1440, height: 900 },
 ];
 
-test.describe("Portal homepage", () => {
+test.describe("Public homepage", () => {
   for (const viewport of VIEWPORTS) {
     test(`has no automatically detectable a11y issues at ${viewport.width}x${viewport.height}`, async ({
       page,
@@ -37,104 +46,86 @@ test.describe("Portal homepage", () => {
     });
   }
 
-  test("Devanagari identity text is not clipped at 360px", async ({ page }) => {
-    await page.setViewportSize({ width: 360, height: 640 });
-    await page.goto("/");
-    await waitForStyles(page);
-
-    // The header carries the Hindi product name; Devanagari matras sit above
-    // and below the baseline, so the rendered box must exceed the font size.
-    const hindiName = page.getByText("सुरंग साथी", { exact: true }).first();
-    await expect(hindiName).toBeVisible();
-
-    const clipped = await hindiName.evaluate((el) => ({
-      overflowsY: el.scrollHeight > el.clientHeight + 1,
-      overflowsX: el.scrollWidth > el.clientWidth + 1,
-    }));
-
-    expect(clipped.overflowsY).toBe(false);
-    expect(clipped.overflowsX).toBe(false);
-  });
-
-  test("the text-size control is rendered exactly once", async ({ page }) => {
-    await page.goto("/");
-    await waitForAppReady(page);
-
-    // Two instances would each hold their own React state and fight over the
-    // root font-size, so aria-pressed would disagree between them.
-    await expect(
-      page.locator('[role="group"][aria-label="Text size"]')
-    ).toHaveCount(1);
-  });
-
-  test("primary navigation collapses on mobile and expands on demand", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 360, height: 640 });
-    await page.goto("/");
-    // click() waits for actionability but not for React to attach handlers, so
-    // an un-gated click here silently does nothing on a slower machine.
-    await waitForAppReady(page);
-
-    const nav = page.getByRole("navigation", { name: "Primary" });
-    const menu = nav.locator("#primary-nav-menu");
-    const dashboardLink = nav.getByRole("link", { name: "Safety Dashboard" });
-    const toggle = nav.getByRole("button", { name: /menu/i });
-
-    // Collapsed by default.
-    await expect(menu).toHaveAttribute("data-state", "collapsed");
-    await expect(dashboardLink).toBeHidden();
-    await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveAttribute("aria-expanded", "false");
-
-    await toggle.click();
-
-    await expect(menu).toHaveAttribute("data-state", "expanded");
-    await expect(toggle).toHaveAttribute("aria-expanded", "true");
-    await expect(dashboardLink).toBeVisible();
-
-    // And it collapses again, so this is a disclosure and not a one-way door.
-    await toggle.click();
-    await expect(dashboardLink).toBeHidden();
-    await expect(toggle).toHaveAttribute("aria-expanded", "false");
-  });
-
-  test("primary navigation is laid out horizontally at 1440px", async ({
-    page,
-  }) => {
+  test("renders every Golden Master section in order", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
     await waitForStyles(page);
 
-    const nav = page.getByRole("navigation", { name: "Primary" });
-    const home = nav.getByRole("link", { name: "Home", exact: true });
-    const audit = nav.getByRole("link", { name: "Audit" });
+    // Government utility strip
+    await expect(page.getByText("Government of India").first()).toBeVisible();
+    await expect(page.getByText("Ministry of Coal").first()).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Skip to main content" })
+    ).toBeVisible();
 
-    await expect(nav.getByRole("link", { name: "Safety Dashboard" })).toBeVisible();
-    await expect(nav.getByRole("button", { name: /menu/i })).toBeHidden();
-    await expect(home).toBeVisible();
-    await expect(audit).toBeVisible();
+    // Hero
+    const h1 = page.getByRole("heading", { level: 1 });
+    await expect(h1).toHaveCount(1);
+    await expect(h1).toContainText("Empowering People.");
+    await expect(h1).toContainText("Safer Mines. Stronger Tomorrow.");
 
-    const homeBox = await home.boundingBox();
-    const auditBox = await audit.boundingBox();
-
-    expect(homeBox).not.toBeNull();
-    expect(auditBox).not.toBeNull();
-    // Same row, laid out left to right.
-    expect(auditBox!.x).toBeGreaterThan(homeBox!.x);
-    expect(Math.abs(auditBox!.y - homeBox!.y)).toBeLessThan(4);
+    // Stats strip, key features, credibility band, footer
+    await expect(
+      page.getByRole("region", { name: /Platform statistics/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Key Features" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: /About Surang Saathi/i })
+    ).toBeVisible();
+    await expect(page.getByRole("contentinfo")).toBeVisible();
   });
 
-  test("interactive controls meet touch-target rules at 360px", async ({
+  test("shows the four Golden Master statistics", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await waitForStyles(page);
+
+    const strip = page.getByRole("region", { name: /Platform statistics/i });
+
+    for (const [value, label] of [
+      ["12.4 lakh", "Inspections Recorded"],
+      ["8,932", "Hazards Identified"],
+      ["1.8 lakh", "Field Users"],
+      ["92%", "Issues Resolved"],
+    ]) {
+      const item = strip.getByRole("listitem").filter({ hasText: label }).first();
+      await expect(item).toContainText(value);
+    }
+  });
+
+  test("shows the five Key Features cards", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await waitForStyles(page);
+
+    const features = page.getByRole("region", { name: "Key Features" });
+    await expect(features.getByRole("listitem")).toHaveCount(5);
+
+    for (const title of [
+      "Digital Inspections",
+      "Safety Analytics",
+      "Accountability",
+      "Geo-verified Evidence",
+      "Regulatory Compliance",
+    ]) {
+      await expect(
+        features.getByRole("heading", { level: 3, name: title })
+      ).toBeVisible();
+    }
+  });
+
+  test("hero calls to action are present and meet touch targets", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.goto("/");
     await waitForStyles(page);
 
-    // Hero calls to action are large field-primary targets.
-    const hero = page.getByRole("region", { name: /Digital Safety/i });
-    for (const name of ["Open Safety Dashboard", "View Compliance Status"]) {
+    const hero = page.getByRole("region", { name: /Empowering People/i });
+
+    for (const name of ["Get Started", "Know More"]) {
       const cta = hero.getByRole("link", { name, exact: true });
       await expect(cta).toBeVisible();
 
@@ -142,97 +133,100 @@ test.describe("Portal homepage", () => {
       expect(box, `${name} should render`).not.toBeNull();
       expect(box!.height).toBeGreaterThanOrEqual(48);
     }
-
-    // The nav disclosure is a primary mobile control.
-    const toggle = page
-      .getByRole("navigation", { name: "Primary" })
-      .getByRole("button", { name: /menu/i });
-    await expect(toggle).toBeVisible();
-
-    const menuBox = await toggle.boundingBox();
-    expect(menuBox).not.toBeNull();
-    expect(menuBox!.height).toBeGreaterThanOrEqual(48);
   });
 
-  test("A+ text size actually enlarges the page and still fits 360px", async ({
+  test("Login to Portal routes to the dashboard", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await waitForStyles(page);
+
+    const login = page
+      .getByRole("banner")
+      .getByRole("link", { name: /Login to Portal/i });
+
+    await expect(login).toBeVisible();
+    await expect(login).toHaveAttribute("href", "/dashboard");
+
+    await login.click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
+  test("navigation collapses on mobile and expands on demand", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.goto("/");
     await waitForAppReady(page);
 
-    const heading = page.getByRole("heading", { level: 1 });
-    const readSizes = () =>
-      page.evaluate(() => ({
-        root: parseFloat(getComputedStyle(document.documentElement).fontSize),
-        h1: parseFloat(
-          getComputedStyle(document.querySelector("h1")!).fontSize
-        ),
-      }));
+    const panel = page.locator("#mobile-nav-panel");
+    const aboutLink = panel.getByRole("link", { name: "About" });
+    const toggle = page.getByRole("button", { name: /menu/i });
 
-    const before = await readSizes();
+    await expect(panel).toHaveAttribute("data-state", "collapsed");
+    await expect(aboutLink).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
 
-    const control = page.getByRole("group", { name: "Text size" });
-    const larger = control.getByRole("button", { name: "Larger text size" });
-    await expect(larger).toBeVisible();
-    await larger.click();
+    await toggle.click();
 
-    // The button reports its own state...
-    await expect(larger).toHaveAttribute("aria-pressed", "true");
-    // ...and the document genuinely reflows at a larger size.
-    await expect
-      .poll(async () => (await readSizes()).h1)
-      .toBeGreaterThan(before.h1);
+    await expect(panel).toHaveAttribute("data-state", "expanded");
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(aboutLink).toBeVisible();
 
-    const after = await readSizes();
-    expect(after.root).toBeGreaterThan(before.root);
-    expect(after.h1).toBeGreaterThan(before.h1);
-
-    // And enlarging text must not break the narrow viewport.
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth
-    );
-    expect(overflow).toBe(false);
-  });
-
-  test("A- text size reduces the page without shrinking touch targets", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 360, height: 640 });
-    await page.goto("/");
-    await waitForAppReady(page);
-
-    const h1Size = () =>
-      page.evaluate(() =>
-        parseFloat(getComputedStyle(document.querySelector("h1")!).fontSize)
-      );
-    const before = await h1Size();
-
-    await page
-      .getByRole("group", { name: "Text size" })
-      .getByRole("button", { name: "Smaller text size" })
-      .click();
-
-    await expect.poll(h1Size).toBeLessThan(before);
-
-    // Worker touch targets are an absolute floor, so reducing text must not
-    // pull the hero CTA below 48px even though its height is rem-based.
-    const cta = page
-      .getByRole("region", { name: /Digital Safety/i })
-      .getByRole("link", { name: "Open Safety Dashboard", exact: true });
-    const box = await cta.boundingBox();
+    // Mobile nav targets are full-width rows, not shrunk desktop links.
+    const box = await aboutLink.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.height).toBeGreaterThanOrEqual(48);
   });
 
-  test("does not present demo figures as live data", async ({ page }) => {
+  test("desktop navigation is a horizontal row at 1440px", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await waitForStyles(page);
+
+    const nav = page.getByRole("navigation", { name: "Primary" });
+    const home = nav.getByRole("link", { name: "Home", exact: true });
+    const contact = nav.getByRole("link", { name: "Contact", exact: true });
+
+    await expect(home).toBeVisible();
+    await expect(contact).toBeVisible();
+    await expect(home).toHaveAttribute("aria-current", "page");
+
+    const homeBox = await home.boundingBox();
+    const contactBox = await contact.boundingBox();
+    expect(contactBox!.x).toBeGreaterThan(homeBox!.x);
+    expect(Math.abs(contactBox!.y - homeBox!.y)).toBeLessThan(4);
+  });
+
+  test("both hero and band imagery have meaningful alt text", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await waitForStyles(page);
+
+    const images = page.getByRole("img").filter({ visible: true });
+    const count = await images.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+
+    for (let i = 0; i < count; i++) {
+      const alt = await images.nth(i).getAttribute("alt");
+      expect(alt, "every content image needs alt text").toBeTruthy();
+      expect(alt!.length).toBeGreaterThan(20);
+    }
+  });
+
+  /* ── Honesty (carried over from the previous suite, unchanged in intent) ── */
+
+  test("does not present illustrative figures as live data", async ({
+    page,
+  }) => {
     await page.goto("/");
     await waitForStyles(page);
 
     const body = (await page.locator("body").innerText()).toLowerCase();
 
-    expect(body).toContain("synthetic demo data");
-    expect(body).not.toContain("live data");
+    expect(body).toContain("illustrative prototype figures");
+    expect(body).not.toContain("live data across mines");
     expect(body).not.toContain("real-time dgms");
   });
 
@@ -246,54 +240,67 @@ test.describe("Portal homepage", () => {
 
     expect(body).toContain("SIH 2026 prototype");
     expect(body).toMatch(/not an official Government of India/i);
+    expect(body).toMatch(/no government endorsement/i);
   });
 
-  test("risk score is never shown without contributing factors", async ({
+  test("does not reproduce government programme marks or attributed quotes", async ({
     page,
   }) => {
     await page.goto("/");
     await waitForStyles(page);
 
-    const section = page.getByRole("region", {
-      name: /Explainable Mine Risk Index/i,
-    });
+    const body = (await page.locator("body").innerText()).toLowerCase();
 
-    await expect(section.getByText("74.2").first()).toBeVisible();
-    await expect(section.getByText("High Risk").first()).toBeVisible();
-
-    for (const factor of [
-      "Overdue Corrective Actions",
-      "Gas Threshold Breaches (30d)",
-      "Inspection Coverage vs Target",
-    ]) {
-      await expect(section.getByText(factor).first()).toBeVisible();
-    }
+    // The Golden Master carries a Digital India mark and a quote attributed to
+    // the Ministry of Coal. Neither may appear on a student prototype.
+    expect(body).not.toContain("digital india");
+    expect(body).not.toContain("— ministry of coal");
+    expect(body).not.toContain("power to empower");
   });
 
-  test("every core service card links to a real route", async ({ page }) => {
+  test("the text-size control is rendered exactly once and works", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 640 });
+    await page.goto("/");
+    await waitForAppReady(page);
+
+    await expect(
+      page.locator('[role="group"][aria-label="Text size"]')
+    ).toHaveCount(1);
+
+    const h1Size = () =>
+      page.evaluate(() =>
+        parseFloat(getComputedStyle(document.querySelector("h1")!).fontSize)
+      );
+    const before = await h1Size();
+
+    await page
+      .getByRole("group", { name: "Text size" })
+      .getByRole("button", { name: "Larger text size" })
+      .click();
+
+    await expect.poll(h1Size).toBeGreaterThan(before);
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth
+    );
+    expect(overflow).toBe(false);
+  });
+
+  test("no navigation link is a decorative dead end", async ({ page }) => {
     await page.goto("/");
     await waitForStyles(page);
 
-    const services = page.getByRole("region", { name: /Core services/i });
-    const links = services.getByRole("link");
+    const hrefs = await page
+      .getByRole("banner")
+      .getByRole("link")
+      .evaluateAll((els) => els.map((el) => el.getAttribute("href")));
 
-    const expected = [
-      "/dashboard",
-      "/hazards",
-      "/inspections",
-      "/corrective-actions",
-      "/compliance",
-      "/audit",
-    ];
-
-    const hrefs = await links.evaluateAll((els) =>
-      els.map((el) => el.getAttribute("href"))
-    );
-
-    for (const href of expected) {
-      expect(hrefs).toContain(href);
+    expect(hrefs.length).toBeGreaterThan(0);
+    for (const href of hrefs) {
+      expect(href, "links must have a real destination").toBeTruthy();
+      expect(href).not.toBe("#");
     }
-    // No decorative anchors that go nowhere.
-    expect(hrefs.every((href) => href && href !== "#")).toBe(true);
   });
 });

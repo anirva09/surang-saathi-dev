@@ -1,71 +1,58 @@
+"use client";
+
 import React from "react";
-import Link from "next/link";
 import { Construction } from "lucide-react";
-import { PortalMasthead } from "@/components/layout/PortalMasthead";
-import { PortalFooter } from "@/components/layout/PortalFooter";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { GovernmentFooter } from "@/components/layout/GovernmentFooter";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { useT } from "@/i18n/LanguageProvider";
 
 /**
- * Homepage links point at real MVP routes. Until those routes are implemented
- * this page answers honestly instead of showing a bare framework 404 — no link
- * on the portal pretends to lead somewhere finished.
+ * Navigation points at the routes these pages will occupy. Until they exist
+ * this screen answers honestly instead of showing a bare framework 404.
  */
 export default function NotFound() {
+  const t = useT();
+
   return (
     <>
-      <PortalMasthead />
+      <SiteHeader />
 
       <main id="main-content" tabIndex={-1} className="bg-background">
-        <div className="mx-auto max-w-[1440px] px-4 md:px-8 py-16">
-          <div className="max-w-[70ch] border border-border bg-surface rounded-[2px] p-6 sm:p-8">
+        <div className="mx-auto max-w-content px-4 md:px-6 py-16">
+          <div className="max-w-[68ch] border border-border bg-surface rounded-sm p-6 sm:p-8 shadow-card">
             <span
-              className="inline-flex items-center justify-center w-11 h-11 rounded-[2px] bg-accent/20 text-warningInk"
+              className="inline-flex items-center justify-center w-11 h-11 rounded-sm bg-accent/20 text-warningInk"
               aria-hidden="true"
             >
               <Construction className="w-5 h-5" />
             </span>
 
             <h1 className="mt-5 text-[1.625rem] font-bold tracking-tight text-text">
-              This section is not built yet
+              {t("notfound.title")}
             </h1>
 
-            <p className="mt-3 text-[0.9375rem] leading-relaxed text-text/80">
-              The current milestone covers the Surang Saathi portal homepage
-              and the manager safety dashboard. The hazard register, inspection
-              register, corrective actions, compliance and audit ledger screens
-              are next on the roadmap and are not implemented in this build.
+            <p className="mt-3 text-[0.9375rem] leading-relaxed text-textMuted">
+              {t("notfound.body1")}
             </p>
 
-            <p className="mt-3 text-[0.9375rem] leading-relaxed text-text/80">
-              The link you followed points at the route this screen will occupy,
-              so nothing here is a placeholder button — it simply has not been
-              built yet.
+            <p className="mt-3 text-[0.9375rem] leading-relaxed text-textMuted">
+              {t("notfound.body2")}
             </p>
 
             <div className="mt-7 flex flex-col sm:flex-row gap-3">
               <ButtonLink href="/" variant="primary" size="lg">
-                Return to the portal homepage
+                {t("notfound.home")}
               </ButtonLink>
               <ButtonLink href="/dashboard" variant="secondary" size="lg">
-                Open the safety dashboard
+                {t("notfound.dashboard")}
               </ButtonLink>
             </div>
-
-            <p className="mt-6 pt-5 border-t border-border text-[0.8125rem] text-text/80">
-              Looking for something specific?{" "}
-              <Link
-                href="/help"
-                className="text-primary underline underline-offset-2 rounded-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                Help &amp; resources
-              </Link>
-              .
-            </p>
           </div>
         </div>
       </main>
 
-      <PortalFooter />
+      <GovernmentFooter />
     </>
   );
 }

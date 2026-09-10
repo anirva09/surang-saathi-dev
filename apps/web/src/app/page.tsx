@@ -1,28 +1,24 @@
 import React from "react";
-import { PortalMasthead } from "@/components/layout/PortalMasthead";
-import { PortalFooter } from "@/components/layout/PortalFooter";
-import { Hero } from "@/components/home/Hero";
-import { MetricsStrip } from "@/components/home/MetricsStrip";
-import { AttentionSection } from "@/components/home/AttentionSection";
-import { ServiceGrid } from "@/components/home/ServiceGrid";
-import { TrustPanel } from "@/components/home/TrustPanel";
-import { WorkflowProof } from "@/components/home/WorkflowProof";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { GovernmentFooter } from "@/components/layout/GovernmentFooter";
+import { HeroSection } from "@/components/home/HeroSection";
+import { StatsStrip } from "@/components/home/StatsStrip";
+import { FeatureGrid } from "@/components/home/FeatureGrid";
+import { CredibilityBand } from "@/components/home/CredibilityBand";
 
 export default function HomePage() {
   return (
     <>
-      <PortalMasthead />
+      <SiteHeader />
 
       <main id="main-content" tabIndex={-1}>
-        <Hero />
-        <MetricsStrip />
-        <AttentionSection />
-        <ServiceGrid />
-        <TrustPanel />
-        <WorkflowProof />
+        <HeroSection />
+        <StatsStrip />
+        <FeatureGrid />
+        <CredibilityBand />
       </main>
 
-      <PortalFooter />
+      <GovernmentFooter />
     </>
   );
 }

@@ -64,7 +64,7 @@ export default function DesignSystemPage() {
             {
               name: "Danger",
               color: "bg-danger",
-              text: "text-surface",
+              text: "text-surfaceStrong",
             },
             {
               name: "Text",

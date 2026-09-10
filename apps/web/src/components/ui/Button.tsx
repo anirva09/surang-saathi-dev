@@ -20,7 +20,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   secondary: "bg-surface border border-border text-text hover:bg-black/5",
   ghost: "bg-transparent text-text hover:bg-black/5",
   commit: "bg-success text-surface hover:opacity-90",
-  danger: "bg-danger text-surface hover:opacity-90",
+  danger: "bg-danger text-surfaceStrong hover:opacity-90",
   link: "text-primary underline bg-transparent p-0 hover:opacity-80",
 };
 

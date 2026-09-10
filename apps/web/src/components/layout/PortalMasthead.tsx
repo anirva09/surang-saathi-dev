@@ -5,11 +5,11 @@ import { PortalHeader } from "./PortalHeader";
 import { PrimaryNav } from "./PrimaryNav";
 
 /**
- * The full portal masthead as one `banner` landmark.
+ * Officer-portal masthead, used by /dashboard.
  *
- * The utility strip, prototype notice, identity block and primary navigation
- * are all site-wide banner content, so they belong inside a single <header>.
- * Keeping them here means no page content sits outside a landmark.
+ * The public outreach site uses SiteHeader instead. Both are one `banner`
+ * landmark and share the utility strip and prototype notice. Session 2 re-skins
+ * this to the locked Golden Master system.
  */
 export function PortalMasthead() {
   return (
